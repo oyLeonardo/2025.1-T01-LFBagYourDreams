@@ -19,7 +19,7 @@ function AdicionarProdutoPage(){
                         <div>
                             <label className="font-bold">Descrição</label>
                             {/* input com h maior */}
-                            <input type="text" placeholder="Lorem Ipsum Is A Dummy Text" name="frame" className="flex border-solid items-start  justify-items-start p-1 px-2 text-start border-1 rounded-md w-full h-40 outline-0"/>
+                            <textarea placeholder="Lorem Ipsum Is A Dummy Text" name="frame" className="flex border-solid items-start  justify-items-start p-1 px-2 text-start border-1 rounded-md w-full h-40 outline-0"/>
                         </div>
                         <div>
                             <label className="font-bold">Categoria</label>
@@ -38,8 +38,7 @@ function AdicionarProdutoPage(){
                     </div>
                     {/* dir */}
                     <div className="w-full flex flex-col items-center">
-                        <label> Imagem do Produto </label>
-                        <div className="w-80 bg-yellow-300 h-80"></div>
+                        <div className="w-80 rounded-2xl bg-gray-300 h-80"></div>
                         <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:cursor-pointer">
                             <p className="text-gray-500">Drop your image here, or browse</p>
                             <p className="text-gray-400 text-sm mt-1">Jpeg, png are allowed</p>
