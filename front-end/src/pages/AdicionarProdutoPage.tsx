@@ -7,7 +7,7 @@ function AdicionarProdutoPage(){
             <div className="p-2 flex justify-baseline">
                 <h1>Detalhes do Produto</h1>
             </div>
-            <form action="" className="flex flex-col h-full rounded-md bg-white p-5 ">
+            <form action="" className="flex flex-col h-full rounded-md bg-white p-10">
                 
                 <div className="flex gap-30 flex-row">
                     {/* esq */}
@@ -19,7 +19,7 @@ function AdicionarProdutoPage(){
                         <div>
                             <label className="font-bold">Descrição</label>
                             {/* input com h maior */}
-                            <textarea placeholder="Lorem Ipsum Is A Dummy Text" name="frame" className="flex border-solid items-start  justify-items-start p-1 px-2 text-start border-1 rounded-md w-full h-40 outline-0"/>
+                            <textarea placeholder="Lorem Ipsum Is A Dummy Text" name="frame" className="flex resize-none border-solid items-start  justify-items-start p-1 px-2 text-start border-1 rounded-md w-full h-40 outline-0"/>
                         </div>
                         <div>
                             <label className="font-bold">Categoria</label>
