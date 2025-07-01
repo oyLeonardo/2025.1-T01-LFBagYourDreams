@@ -32,7 +32,7 @@ function AdminPage() {
         {/* header */}
         <div className="flex justify-end items-center bg-white h-30 p-4 shadow-md"> 
           <div className="flex mr-4">
-            <Button name="ADMIN"></Button>
+            <Button name="ADMIN" color="green"></Button>
           </div>
         </div>
 

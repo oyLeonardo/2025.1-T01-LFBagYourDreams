@@ -10,7 +10,7 @@ function ProdutosPage(){
       </div>
       <div className="flex flex-row justify-end bg-green-300 w-full">
         <Link to="../adicionarproduto">
-            <Button name="Adicionar Produto"></Button>
+            <Button name="Adicionar Produto" color="green"></Button>
         </Link>
         {/* <Button name="Excluir"></Button> (TODO)*/}
       </div>
