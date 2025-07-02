@@ -1,9 +1,8 @@
-import TabelaPedidos from "./tabelapedidos"
+import TabelaPedidos from "../components/TabelaPedidos"
 function PedidosPage(){
 return (
     <>
-      <div className="flex flex-row justify-between bg-blue-300 w-full"></div>
-  <TabelaPedidos></TabelaPedidos>
+      <TabelaPedidos></TabelaPedidos>
     </>
   )
 }

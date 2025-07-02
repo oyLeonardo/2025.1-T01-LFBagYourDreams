@@ -8,8 +8,8 @@ const colors = {
      black: "bg-black text-white",
      blue: "text-blue-500 hover:bg-blue-500 border-blue-500",    
      red: "text-red-500 hover:bg-red-500 border-red-500",
-     green: "text-green-500 hover:bg-green-500 border-green-500",
-     bggreen: "text-white bg-green-700 hover:bg-green-800 border-green-500",
+     green: "text-[#075336] hover:bg-[#075336] border-[#075336]",
+     bggreen: "text-white bg-[#075336] hover:bg-[#075336] border-[#075336]",
      bgblue: "text-white bg-blue-700 hover:bg-blue-800 border-blue-500",
      bgred: "text-white bg-red-700 hover:bg-red-800 border-red-500"
     };
