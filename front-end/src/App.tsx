@@ -1,25 +1,33 @@
-import { Link, Routes, Route } from 'react-router-dom'
-import AdminPage from './pages/AdminPage'
-import PedidosPage from './pages/PedidosPage'
-import ProdutosPage from './pages/ProdutosPage'
-import AdicionarProdutoPage from './pages/AdicionarProdutoPage'
+import { Routes, Route } from 'react-router-dom';
+import AdminPage from './pages/AdminPage';
+import PedidosPage from './pages/PedidosPage';
+import ProdutosPage from './pages/ProdutosPage';
+import AdicionarProdutoPage from './pages/AdicionarProdutoPage';
+import HomePage from './pages/HomePage';
+
 function App() {
   return (
-    <>
-    <div className='h-full'>
-      <Routes>
-        <Route path="/admin" element={<AdminPage />}>
-          <Route index element={<PedidosPage />} />
-          <Route path="pedidos" element={<PedidosPage />} /> 
-          <Route path="produtos" element={<ProdutosPage />} />
-          <Route path="adicionarproduto" element={<AdicionarProdutoPage />} />
-        </Route>
-        <Route path="/" element={<h1>Página Inicial Pública <Link to="admin">ir para adm</Link></h1>} />
-        <Route path="*" element={<h1>404 - Página Não Encontrada</h1>} />
-      </Routes>
+    <div className="min-h-screen flex flex-col">
+      <div className="flex-grow">
+        <Routes>
+          <Route path="/admin" element={<AdminPage />}>
+            <Route index element={<PedidosPage />} />
+            <Route path="pedidos" element={<PedidosPage />} />
+            <Route path="produtos" element={<ProdutosPage />} />
+            <Route path="adicionarproduto" element={<AdicionarProdutoPage />} />
+          </Route>
+          
+          <Route path="/" element={<HomePage />} />
+          
+          <Route path="*" element={
+            <div className="min-h-screen flex items-center justify-center">
+              <h1 className="text-2xl font-bold">404 - Página Não Encontrada</h1>
+            </div>
+          } />
+        </Routes>
+      </div>
     </div>
-    </>
-  )
+  );
 }
 
-export default App
+export default App;
