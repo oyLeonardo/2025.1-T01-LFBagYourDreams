@@ -11,8 +11,9 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
-import environ
 import os
+import environ
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -43,10 +44,17 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
-    
+    'django.contrib.staticfiles', 
     'app',
+    'rest_framework',
+    'django_filters',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend'
+    ]
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -77,7 +85,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
@@ -91,12 +98,6 @@ DATABASES = {
         'PORT': env('DB_PORT'),
     }
 }
-
-print("--- A DEPURAR AS CONFIGURAÇÕES DA BASE DE DADOS ---")
-print(f"HOST LIDO PELO DJANGO: {DATABASES['default']['HOST']}")
-print(f"PORT LIDO PELO DJANGO: {DATABASES['default']['PORT']}")
-print(f"USER LIDO PELO DJANGO: {DATABASES['default']['USER']}")
-print("-------------------------------------------------")
 
 
 # Password validation

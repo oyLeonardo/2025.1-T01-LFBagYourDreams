@@ -1,3 +1,6 @@
-from django.contrib import admin
+""" Admin da aplicação """
 
-# Register your models here.
+from django.contrib import admin
+from . import models
+
+admin.site.register(models.Produto)
