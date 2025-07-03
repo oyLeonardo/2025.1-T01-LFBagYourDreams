@@ -11,11 +11,40 @@ class ProductListSerializer(serializers.ModelSerializer):
         """Metainformações do ProductListSerializer."""
         model = models.Produto
         fields = [
-            'id', 'titulo', 'categoria', 'descricao', 'preco',
-            'material', 'cor_padrao', 'altura', 'comprimento',
-            'largura', 'quantidade'
+            'id', 'titulo', 'descricao', 'categoria', 'preco',
+            'quantidade', 'material', 'cor_padrao', 'altura',
+            'comprimento', 'largura'
         ]
         depth = 1
+    def validate_quantidade(self, value):
+        """Valida que a quantidade não seja negativa."""
+        if value  < 0:
+            raise serializers.ValidationError("A quantidade não pode ser negativa.")
+        return value
+
+    def validate_preco(self, value):
+        """Valida que o preço seja maior que zero."""
+        if value <= 0:
+            raise serializers.ValidationError("O preço deve ser maior que zero.")
+        return value
+
+    def validate_altura(self, value):
+        """Valida que a altura não seja negativa."""
+        if value is not None and value < 0:
+            raise serializers.ValidationError("A altura não pode ser negativa.")
+        return value
+
+    def validate_largura(self, value):
+        """Valida que a largura não seja negativa."""
+        if value is not None and value < 0:
+            raise serializers.ValidationError("A largura não pode ser negativa.")
+        return value
+
+    def validate_comprimento(self, value):
+        """Valida que o comprimento não seja negativo."""
+        if value is not None and value < 0:
+            raise serializers.ValidationError("O comprimento não pode ser negativo.")
+        return value
 
 
 class ProductDetailSerializer(serializers.ModelSerializer):
@@ -25,8 +54,37 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         """Metainformações do ProductDetailSerializer."""
         model = models.Produto
         fields = [
-            'id', 'titulo', 'categoria', 'descricao', 'preco',
-            'material', 'cor_padrao', 'altura', 'comprimento',
-            'largura', 'quantidade'
+            'id', 'titulo', 'descricao', 'categoria', 'preco',
+            'quantidade', 'material', 'cor_padrao', 'altura',
+            'comprimento', 'largura'
         ]
         depth = 1
+    def validate_quantidade(self, value):
+        """Valida que a quantidade não seja negativa."""
+        if value < 0:
+            raise serializers.ValidationError("A quantidade não pode ser negativa.")
+        return value
+
+    def validate_preco(self, value):
+        """Valida que o preço seja maior que zero."""
+        if value <= 0:
+            raise serializers.ValidationError("O preço deve ser maior que zero.")
+        return value
+
+    def validate_altura(self, value):
+        """Valida que a altura não seja negativa."""
+        if value < 0:
+            raise serializers.ValidationError("A altura não pode ser negativa.")
+        return value
+
+    def validate_largura(self, value):
+        """Valida que a largura não seja negativa."""
+        if value < 0:
+            raise serializers.ValidationError("A largura não pode ser negativa.")
+        return value
+
+    def validate_comprimento(self, value):
+        """Valida que o comprimento não seja negativo."""
+        if value < 0:
+            raise serializers.ValidationError("O comprimento não pode ser negativo.")
+        return value
