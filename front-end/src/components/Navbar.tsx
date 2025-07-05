@@ -27,9 +27,9 @@ const Navbar = () => {
                 <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
                     <div className="flex justify-between items-center h-16">
                         {/* Logo com espessura reduzida (font-bold) e alinhada à esquerda */}
-                        <div className="flex-shrink-0 flex items-center ml-0 -ml-0.5">
+                        <div className="flex-shrink-0 flex items-center ml-0">
                             <div className="text-[#075336] font-['Playfair_Display'] font-bold text-2xl select-none">
-                                LF Bag Your Dream
+                                LF Bag Your Dreams
                             </div>
                         </div>
 
@@ -52,20 +52,22 @@ const Navbar = () => {
                         </div>
 
                         {/* Ícones e Admin (Desktop) */}
-                        <div className="hidden md:flex md:items-center md:space-x-3">
+                        <div className="hidden md:flex md:items-center md:space-x-4">
                             <NavLink 
                                 to="/conta" 
-                                className="text-gray-700 hover:text-green-800 p-2"
+                                className="text-gray-700 hover:text-[#075336] p-2"
                             >
                                 <UserIcon />
                             </NavLink>
-                            
+
+                        <div className="ml-1">
                             <CartDrawer />
-                            
-                            <NavLink
-                                to="/admin"
-                                className="px-3 py-1.5 bg-[#075336] text-white rounded-md hover:bg-green-800 transition-colors text-sm font-medium"
-                            >
+                        </div>
+
+                        <NavLink
+                            to="/admin"
+                            className="px-3 py-1.5 bg-[#075336] text-white rounded-md hover:bg-[#053c27] transition-colors text-sm font-medium"
+                        >
                                 Admin
                             </NavLink>
                         </div>
@@ -73,7 +75,7 @@ const Navbar = () => {
                         {/* Mobile menu button */}
                         <div className="flex md:hidden items-center">
                             {/* Ícone de busca mobile */}
-                            <button className="mr-2 text-gray-700">
+                            <button className="mr-3 text-gray-700 hover:text-[#075336]">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
