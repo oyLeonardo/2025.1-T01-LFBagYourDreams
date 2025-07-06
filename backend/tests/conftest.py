@@ -1,19 +1,17 @@
 import pytest
-from app.serializers import ProductDetailSerializer, ProductListSerializer
-from app.models import Produto
+from django.apps import apps
+from faker import Faker
+
+@pytest.fixture(autouse=True, scope="session")
+def django_test_environment(django_test_environment):
+    """Fixture que ativa o modo de gerenciamento de modelos para testes."""
+
+    for m in [m for m in apps.get_models() if not m._meta.managed]:
+        m._meta.managed = True
 
 
-@pytest.fixture
-def product():
-  yield Produto.objects.create(
-    titulo="Produto Teste",
-    descricao="Durável e confiável",
-    preco=99.99,
-    quantidade=10,
-    categoria="Masculino",
-    material="Couro",
-    cor_padrao="Preto",
-    altura=30.0,
-    comprimento=40.0,
-    largura=20.0
-  )
+@pytest.fixture(autouse=True, scope="session")
+def faker():
+    """Fixture que fornece uma instância do Faker para geração de dados falsos."""
+
+    yield Faker('pt_BR')

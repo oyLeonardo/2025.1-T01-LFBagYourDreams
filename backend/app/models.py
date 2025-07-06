@@ -9,8 +9,8 @@ class Carrinho(models.Model):   # pylint: disable=too-few-public-methods
 
     class Meta: # pylint: disable=too-few-public-methods
         """Define que este modelo é apenas leitura (sem migrations)"""
-        managed = False
         db_table = 'carrinho'
+        managed = False
 
 
 class Cor(models.Model):    # pylint: disable=too-few-public-methods
@@ -21,8 +21,8 @@ class Cor(models.Model):    # pylint: disable=too-few-public-methods
 
     class Meta: # pylint: disable=too-few-public-methods
         """Define que este modelo é apenas leitura (sem migrations)"""
-        managed = False
         db_table = 'cor'
+        managed = False
 
 
 class Personalizacao(models.Model): # pylint: disable=too-few-public-methods
@@ -33,12 +33,13 @@ class Personalizacao(models.Model): # pylint: disable=too-few-public-methods
 
     class Meta: # pylint: disable=too-few-public-methods
         """Define que este modelo é apenas leitura (sem migrations)"""
-        managed = False
         db_table = 'personalizacao'
+        managed = False
 
 
 class Produto(models.Model):    # pylint: disable=too-few-public-methods
     """Representa um produto disponível na loja."""
+
     id = models.BigAutoField(primary_key=True)
     preco = models.FloatField()
     quantidade = models.BigIntegerField()
@@ -55,8 +56,8 @@ class Produto(models.Model):    # pylint: disable=too-few-public-methods
         return str(self.titulo or '')
     class Meta: # pylint: disable=too-few-public-methods
         """Define que este modelo é apenas leitura (sem migrations)"""
-        managed = False
         db_table = 'produto'
+        managed = False
 
 
 class ProdutoCarrinho(models.Model):    # pylint: disable=too-few-public-methods
@@ -67,5 +68,5 @@ class ProdutoCarrinho(models.Model):    # pylint: disable=too-few-public-methods
 
     class Meta: # pylint: disable=too-few-public-methods
         """Define que este modelo é apenas leitura (sem migrations)"""
-        managed = False
         db_table = 'produto_carrinho'
+        managed = False
