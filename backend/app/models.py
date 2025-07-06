@@ -13,6 +13,10 @@ class Carrinho(models.Model):   # pylint: disable=too-few-public-methods
         managed = False
 
 
+    def __str__(self):
+        return f'Subtotal: {self.subtotal}'
+
+
 class Cor(models.Model):    # pylint: disable=too-few-public-methods
     """Representa uma cor disponível para personalização de produtos."""
     id = models.BigAutoField(primary_key=True)
@@ -23,6 +27,10 @@ class Cor(models.Model):    # pylint: disable=too-few-public-methods
         """Define que este modelo é apenas leitura (sem migrations)"""
         db_table = 'cor'
         managed = False
+
+
+    def __str__(self):
+        return str(self.nome)
 
 
 class Personalizacao(models.Model): # pylint: disable=too-few-public-methods

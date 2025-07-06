@@ -3,9 +3,10 @@ from app.models import Produto
 
 
 @pytest.mark.django_db
-def test_product_valid_creation():
+def test_valid_product_creation():
     """
     Testa a criação de um produto com dados válidos.
+    Deve existir no banco de dados após a criação.
     """
     product = Produto.objects.create(
         titulo="Teste Produto",
@@ -28,6 +29,7 @@ def test_product_valid_creation():
 def test_product_str():
     """
     Testa o método __str__ do modelo Produto.
+    Deve retornar o título do produto.
     """
 
     product = Produto.objects.create(
