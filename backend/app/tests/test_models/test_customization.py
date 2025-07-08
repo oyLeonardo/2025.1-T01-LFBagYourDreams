@@ -1,6 +1,8 @@
+"""Testes para o model 'Personalizacao'."""
+
 import pytest
 from django.db import IntegrityError
-from app.models import Produto, Cor, Personalizacao
+from app.models import Produto, Cor, Personalizacao # pylint: disable=import-error
 
 
 @pytest.mark.django_db

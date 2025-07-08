@@ -1,5 +1,7 @@
+"""Testes para o modelo 'Carrinho'"""
+
 import pytest
-from app.models import Carrinho
+from app.models import Carrinho # pylint: disable=import-error
 
 
 @pytest.mark.django_db

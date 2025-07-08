@@ -1,6 +1,6 @@
-[MASTER] 
+[MASTER]
 
-load-plugins=pylint_venv
+load-plugins=pylint_venv, pylint.extensions.per_file_ignores
 
 [MAIN]
 

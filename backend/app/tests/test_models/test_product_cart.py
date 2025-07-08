@@ -1,6 +1,8 @@
+"""Testes para o model que linka o Produto ao Carrinho: 'ProdutoCarrinho'."""
+
 import pytest
 from django.db import IntegrityError
-from app.models import Produto, Carrinho, ProdutoCarrinho
+from app.models import Produto, Carrinho, ProdutoCarrinho # pylint: disable=import-error
 
 
 @pytest.mark.django_db

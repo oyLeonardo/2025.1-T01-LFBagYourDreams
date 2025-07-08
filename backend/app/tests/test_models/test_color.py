@@ -1,5 +1,7 @@
+"""Testes para o model de 'Cor'"""
+
 import pytest
-from app.models import Cor
+from app.models import Cor #pylint: disable=import-error
 
 
 @pytest.mark.django_db
