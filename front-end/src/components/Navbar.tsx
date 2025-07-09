@@ -8,10 +8,10 @@ const Navbar = () => {
 
     const navLinks = [
         { name: 'Home', path: '/' },
-        { name: 'Bolsas', path: '/bolsas' },
-        { name: 'Acessórios', path: '/acessorios' },
-        { name: 'Promoções', path: '/promocoes' },
-        { name: 'Contato', path: '/contato' },
+        { name: 'Masculino', path: '/categoria/masculino' },
+        { name: 'Feminino', path: '/categoria/feminino' },
+        { name: 'Infantil', path: '/categoria/infantil' },
+        { name: 'Termicas', path: '/categoria/termicas' },
     ];
 
     const UserIcon = () => (

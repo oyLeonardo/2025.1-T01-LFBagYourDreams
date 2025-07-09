@@ -4,6 +4,7 @@ import PedidosPage from './pages/PedidosPage';
 import ProdutosPage from './pages/ProdutosPage';
 import AdicionarProdutoPage from './pages/AdicionarProdutoPage';
 import HomePage from './pages/HomePage';
+import CatalogoPage from './pages/CatalogoPage';
 
 function App() {
   return (
@@ -18,6 +19,8 @@ function App() {
           </Route>
           
           <Route path="/" element={<HomePage />} />
+
+          <Route path="/categoria/:categoria" element={<CatalogoPage />} />
           
           <Route path="*" element={
             <div className="min-h-screen flex items-center justify-center">
