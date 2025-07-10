@@ -9,14 +9,11 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-
 from pathlib import Path
 import os
 import environ
 import sys
 
-
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 env = environ.Env()
@@ -25,6 +22,8 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 SUPABASE_URL = env('SUPABASE_URL')
 SUPABASE_KEY = env('SUPABASE_KEY')
 
+AWS_ACCESS_KEY_ID = SUPABASE_KEY
+AWS_SECRET_ACCESS_KEY = SUPABASE_KEY
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
@@ -34,7 +33,7 @@ SECRET_KEY = 'django-insecure-o6$@-pays*)g5z7z5u2q$g4w9%7^d-2k7=a$nvy4+z2&=o9l!=
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*'] # Manter para facilitar no dev, mas ajustar para prod
 
 
 # Application definition
@@ -54,7 +53,12 @@ INSTALLED_APPS = [
 REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend'
-    ]
+    ],
+    # Opcional, mas útil para ter certeza que o BrowsableAPIRenderer está sempre lá
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    )
 }
 
 MIDDLEWARE = [
@@ -147,6 +151,30 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
+# Suas credenciais já estão no .env, vamos usá-las aqui
+SUPABASE_PROJECT_ID = env('SUPABASE_URL').split('.')[0].replace('https://', '')
+SUPABASE_SERVICE_KEY = env('SUPABASE_KEY')
+SUPABASE_BUCKET_NAME = 'imagens-produtos' # Ou o nome do seu bucket
+
+# Configurações para o django-storages
+AWS_ACCESS_KEY_ID = SUPABASE_PROJECT_ID
+AWS_SECRET_ACCESS_KEY = SUPABASE_SERVICE_KEY
+AWS_STORAGE_BUCKET_NAME = SUPABASE_BUCKET_NAME
+AWS_S3_ENDPOINT_URL = f"https://{SUPABASE_PROJECT_ID}.supabase.co/storage/v1"
+
+# Configurações adicionais recomendadas
+AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': 'max-age=86400', # Cache de 1 dia para as imagens
+}
+AWS_DEFAULT_ACL = None # O Supabase gerencia as permissões no bucket
+AWS_LOCATION = 'media' # Cria uma pasta "media" dentro do bucket para organizar
+
+# URL pública para acessar os arquivos
+# IMPORTANTE: A URL do seu bucket deve ser esta
+MEDIA_URL = f'{AWS_S3_ENDPOINT_URL}/object/public/{AWS_STORAGE_BUCKET_NAME}/{AWS_LOCATION}/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
