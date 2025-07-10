@@ -9,18 +9,19 @@ function AdminPage() {
     
     useEffect(() => {
     const pathSegments = location.pathname.split('/');
-    // Pega a última parte da URL (ex: "pedidos", "produtos")
     const currentPathSegment = pathSegments[pathSegments.length - 1];
 
-    if (currentPathSegment === 'pedidos' || currentPathSegment === 'produtos') {
-      setActive(currentPathSegment);
-    } else {
-      // Se a URL não for reconhecida (ex: /admin), redireciona para o padrão
-      // Isso é importante para o caso de alguém acessar /admin diretamente
+    if (currentPathSegment === 'pedidos') {
+      setActive('pedidos');
+    } else if (currentPathSegment === 'produtos' || currentPathSegment === 'adicionarproduto') {
+      // Mantém "produtos" ativo tanto na página de produtos quanto na de adicionar produto
+      setActive('produtos');
+    } else if (currentPathSegment === 'admin' || currentPathSegment === '') {
+      // Se a URL for apenas /admin, redireciona para o padrão
       setActive('pedidos');
       navigate('/admin/pedidos', { replace: true });
     }
-  }, [location.pathname, navigate]);
+}, [location.pathname, navigate]);
     
     return (
     <>
@@ -29,20 +30,22 @@ function AdminPage() {
       <div className="flex flex-col w-60 px-3 bg-white">
         <div className="flex items-center h-32 justify-center mb-10">
         {/* aqui vai ter a nossa logo */}
-        LOGO
+        <h1 className="text-4xl md:text-md font-black text-[#032719] mb-4">
+            <span className="text-[#034722]">ADMIN</span>
+          </h1>
         </div>
             <Link to="pedidos" className="mb-1">
               <Selector
                 name="PEDIDOS"
                 isActive={active === "pedidos"}
-                onClick={() => setActive("pedidos")}
+                onClick={() => setActive("pedidos")} // Mantém para o CSS
               />
             </Link>
             <Link to="produtos">
               <Selector
                 name="PRODUTOS"
                 isActive={active === "produtos"}
-                onClick={() => setActive("produtos")}
+                onClick={() => setActive("produtos")} // Mantém para o CSS
               />
             </Link>
         

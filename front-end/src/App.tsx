@@ -17,7 +17,6 @@ function App() {
             <Route path="produtos" element={<ProdutosPage />} />
             <Route path="adicionarproduto" element={<AdicionarProdutoPage />} />
           </Route>
-          
           <Route path="/" element={<HomePage />} />
 
           <Route path="/categoria/:categoria" element={<CatalogoPage />} />
