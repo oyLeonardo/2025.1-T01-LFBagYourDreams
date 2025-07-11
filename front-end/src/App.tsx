@@ -5,6 +5,7 @@ import ProdutosPage from './pages/ProdutosPage';
 import AdicionarProdutoPage from './pages/AdicionarProdutoPage';
 import HomePage from './pages/HomePage';
 import CatalogoPage from './pages/CatalogoPage';
+import ProdutoPageCatalogo from './pages/ProdutoPageCatalogo';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
           <Route path="/" element={<HomePage />} />
 
           <Route path="/categoria/:categoria" element={<CatalogoPage />} />
+          <Route path="/produto/:id" element={<ProdutoPageCatalogo />} />
           
           <Route path="*" element={
             <div className="min-h-screen flex items-center justify-center">
