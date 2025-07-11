@@ -26,6 +26,7 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/categoria/:categoria" element={<CatalogoPage />} />
           <Route path="/produto/:id" element={<ProdutoPageCatalogo />} />
+          <Route path="/produto/:id" element={<ProdutoPageCatalogo />} />
           
           <Route path="*" element={
             <div className="min-h-screen flex items-center justify-center">
