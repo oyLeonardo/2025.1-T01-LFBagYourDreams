@@ -1,5 +1,6 @@
 
 export type Product = {
+  id: number
   produto: string
   estoque: string
   data: number
@@ -9,94 +10,51 @@ export type Product = {
 
 export const defaultData: Product[] = [
   {
-    produto: 'tanner',
-    estoque: 'linsley',
+    id: 1,
+    produto: 'Bolsa de Couro Premium',
+    estoque: '25',
     data: 24,
-    status: 'In Relationship',
-    preco: 50,
+    status: 'Ativo',
+    preco: 150,
   },
   {
-    produto: 'tandy',
-    estoque: 'miller',
+    id: 2,
+    produto: 'Mochila Executiva',
+    estoque: '18',
     data: 40,
-    status: 'Single',
-    preco: 80,
+    status: 'Ativo',
+    preco: 280,
   },
   {
-    produto: 'joe',
-    estoque: 'dirte',
+    id: 3,
+    produto: 'Carteira Masculina',
+    estoque: '35',
     data: 45,
-
-    status: 'Complicated',
-    preco: 10,
-  },
-  {
-    produto: 'anna',
-    estoque: 'smith',
-    data: 29,
-    
-    status: 'Single',
-    preco: 30,
-  },
-  {
-    produto: 'leo',
-    estoque: 'souza',
-    data: 32,
-    
-    status: 'Married',
-    preco: 90,
-  },
-  {
-    produto: 'nina',
-    estoque: 'oliveira',
-    data: 28,
-    
-    status: 'Single',
+    status: 'Ativo',
     preco: 75,
   },
   {
-    produto: 'tanner',
-    estoque: 'linsley',
-    data: 24,
-     
-    status: 'In Relationship',
-    preco: 50,
-  },
-  {
-    produto: 'tandy',
-    estoque: 'miller',
-    data: 40,
-    
-    status: 'Single',
-    preco: 80,
-  },
-  {
-    produto: 'joe',
-    estoque: 'dirte',
-    data: 45,
-    
-    status: 'Complicated',
-    preco: 10,
-  },
-  {
-    produto: 'anna',
-    estoque: 'smith',
+    id: 4,
+    produto: 'Bolsa Feminina Casual',
+    estoque: '12',
     data: 29,
-    status: 'Single',
-    preco: 30,
+    status: 'Ativo',
+    preco: 120,
   },
   {
-    produto: 'leo',
-    estoque: 'souza',
+    id: 5,
+    produto: 'Mala de Viagem',
+    estoque: '8',
     data: 32,
-    status: 'Married',
-    preco: 90,
+    status: 'Ativo',
+    preco: 350,
   },
   {
-    produto: 'nina',
-    estoque: 'oliveira',
+    id: 6,
+    produto: 'Necessaire de Couro',
+    estoque: '22',
     data: 28,
-    status: 'Single',
-    preco: 75,
+    status: 'Ativo',
+    preco: 85,
   },
 ]

@@ -5,11 +5,8 @@ import ProdutosPage from './pages/ProdutosPage';
 import AdicionarProdutoPage from './pages/AdicionarProdutoPage';
 import HomePage from './pages/HomePage';
 import CatalogoPage from './pages/CatalogoPage';
-<<<<<<< HEAD
 import DetalheProdutoPage from './pages/DetalheProdutoPage';
-=======
 import ProdutoPageCatalogo from './pages/ProdutoPageCatalogo';
->>>>>>> 9fc2172573144347db58fd1243c84ca517eca3e1
 
 function App() {
   return (

@@ -24,24 +24,39 @@ function DetalheProdutoPage() {
             return;
         }
 
-        try {
-            // Decodifica o produtoId de Base64
-            const produtoDecodificado = atob(produtoId);
-            console.log('Produto decodificado:', produtoDecodificado);
-            
-            // Buscar o produto pelos dados mockados
-            const produtoEncontrado = defaultData.find(
-                p => p.produto === produtoDecodificado
-            );
-            
-            console.log('Produto encontrado:', produtoEncontrado);
-            setProduto(produtoEncontrado || null);
-        } catch (error) {
-            console.error('Erro ao decodificar Base64:', error);
-            setProduto(null);
-        }
-        
-        setLoading(false);
+        // Função para buscar produto por ID
+        const fetchProduto = async () => {
+            try {
+                setLoading(true);
+                
+                // Primeiro tenta buscar do backend
+                const response = await fetch(`http://localhost:8000/api/products/${produtoId}`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    setProduto(data);
+                } else {
+                    // Fallback para dados mockados (durante desenvolvimento)
+                    console.log('Backend não disponível, usando dados mockados');
+                    const produtoEncontrado = defaultData.find(
+                        p => p.id.toString() === produtoId
+                    );
+                    setProduto(produtoEncontrado || null);
+                }
+            } catch (error) {
+                console.error('Erro ao buscar produto:', error);
+                
+                // Fallback para dados mockados
+                const produtoEncontrado = defaultData.find(
+                    p => p.id.toString() === produtoId
+                );
+                setProduto(produtoEncontrado || null);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProduto();
     }, [produtoId]);
 
     if (loading) {
