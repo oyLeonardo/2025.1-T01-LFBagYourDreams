@@ -17,17 +17,14 @@ const columns = [
   }),
   columnHelper.accessor('estoque', {
     cell: (info) => <i>{info.getValue()}</i>,
-    header: 'Estoque',
+    header: 'Estoque (Quantidade)',
   }),
   columnHelper.accessor('data', {
-    header: 'Data',
+    header: 'Preço',
     cell: (info) => info.renderValue(),
   }),
   columnHelper.accessor('status', {
-    header: 'Status',
-  }),
-  columnHelper.accessor('preco', {
-    header: 'Preço',
+    header: 'Categoria',
   }),
 ];
 
@@ -38,8 +35,9 @@ function TabelaProdutos() {
 
 
   const handleRowClick = (produto: Product) => {
-    navigate(`/produto/${produto.produto}`); //aqui deveria ser .id mas os dados estão mockados e eu não fiz um id para eles kkkkkkkk
-  }; 
+    const produtoCodificado = btoa(produto.produto);
+    navigate(`/admin/produto/${produtoCodificado}`); //aqui deveria ser .id mas os dados estão mockados e eu não fiz um id para eles kkkkkkkk
+  };
 
   const paginatedData = useMemo(() => {
     const start = pageIndex * pageSize;
