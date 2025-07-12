@@ -74,7 +74,9 @@ class ProdutoImagem(models.Model):
         on_delete=models.CASCADE,
         related_name='imagens'
     )
-    url = models.URLField()
+    # TROCAMOS URLField POR ImageField
+    # O 'upload_to' define a subpasta dentro do AWS_LOCATION ('media/')
+    url = models.URLField(default='https://tixunpfronrbfeswufuv.supabase.co/storage/v1/object/public/imagens-produtos/media/produtos/0a5dc12e-0203-4c98-bf56-3f0671e14902.jpg?')
     criado_em = models.DateTimeField(auto_now_add=True)
 
     class Meta: # pylint: disable=too-few-public-methods
@@ -84,7 +86,6 @@ class ProdutoImagem(models.Model):
 
     def __str__(self):
         return f"Imagem do produto {self.produto.titulo}" # pylint: disable=no-member
-
 
 class ProdutoCarrinho(models.Model):    # pylint: disable=too-few-public-methods
     """Relaciona produtos com carrinhos de compra."""
@@ -96,3 +97,16 @@ class ProdutoCarrinho(models.Model):    # pylint: disable=too-few-public-methods
         """Define que este modelo é apenas leitura (sem migrations)"""
         db_table = 'produto_carrinho'
         managed = False
+
+class Pedido(models.Model):
+    mercadopago_preference_id = models.CharField(max_length=255, blank=True, null=True)
+    mercadopago_payment_id = models.CharField(max_length=255, blank=True, null=True)
+    status = models.CharField(max_length=50, default='pending') # Ex: pending, approved, rejected
+    frete = models.FloatField(blank=True, null=True)
+    valor_total = models.FloatField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    external_reference = models.CharField(max_length=255, unique=True, null=True, blank=True)
+
+    def __str__(self):
+        return f"Pedido {self.id} - Status: {self.status}"

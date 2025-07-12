@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1>Status do Pagamento</h1>
+    <p><strong>Status:</strong> {{ status }}</p>
+    {% if payment_id %}
+        <p><strong>ID do Pagamento:</strong> {{ payment_id }}</p>
+        <p><strong>Detalhe do Status:</strong> {{ status_detail }}</p>
+    {% endif %}
+    {% if error %}
+        <p><strong>Erro:</strong> {{ error }}</p>
+    {% endif %}
+    <a href="{% url 'pedidos' %}">Criar outro pagamento</a>
+</body>
+</html>

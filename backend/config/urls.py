@@ -31,7 +31,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('fetch-data/', views.fetch_data_view, name='fetch_data'),
     path('insert-data/', views.insert_data_view, name='insert_data'),
-    path('', views.home, name='home'),
+    path('', views.home_view, name='home_view'),
     path('api/', include('app.urls')),
     path('api/token/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', jwt_views.TokenRefreshView.as_view(), name='token_refresh'),

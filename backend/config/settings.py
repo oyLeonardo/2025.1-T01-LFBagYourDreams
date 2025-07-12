@@ -20,6 +20,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env()
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
+# Supabase connection
 SUPABASE_URL = env('SUPABASE_URL')
 SUPABASE_KEY = env('SUPABASE_KEY')
 
@@ -31,11 +32,16 @@ AWS_SECRET_ACCESS_KEY = SUPABASE_KEY
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-o6$@-pays*)g5z7z5u2q$g4w9%7^d-2k7=a$nvy4+z2&=o9l!='
 
+# Mercado Pago API integration
+MERCADOPAGO_PUBLIC_KEY = env('MERCADOPAGO_PUBLIC_KEY')
+MERCADOPAGO_ACCESS_TOKEN = env('MERCADOPAGO_ACCESS_TOKEN')
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*'] # Manter para facilitar no dev, mas ajustar para prod
+SITE_URL = 'https://33ca964d5779.ngrok-free.app'
 
+ALLOWED_HOSTS = []
 
 # Application definition
 
@@ -46,10 +52,16 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'app',
     'rest_framework',
-    'django_filters',
     'corsheaders',
+    'django_filters',
+    'app.apps.MyappConfig',
+]
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173", # Porta padrão do Vite dev server
+    "http://127.0.0.1:5173",
+    # Adicione aqui o URL do seu frontend em produção (ex: "https://your-frontend-domain.com")
 ]
 
 REST_FRAMEWORK = {
@@ -87,7 +99,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'app/templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
