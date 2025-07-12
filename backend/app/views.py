@@ -4,13 +4,32 @@ import logging
 from django.http import JsonResponse, HttpResponse
 from django.db import DatabaseError
 from rest_framework import generics, filters, status #permissions
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .utils.supabase_utils import fetch_from_supabase, insert_to_supabase
 from . import serializers, models
 from .serializers import ProdutoImagemSerializer
+
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer): # pylint: disable=abstract-method
+    """Serializer personalizado para incluir informações adicionais no token JWT."""
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+
+        # Add custom claims
+        token['is_staff'] = user.is_staff
+        token['is_superuser'] = user.is_superuser
+
+        return token
+
+class MyTokenObtainPairView(TokenObtainPairView): # pylint: disable=abstract-method
+    """View personalizada para o token JWT."""
+    serializer_class = MyTokenObtainPairSerializer
 
 def fetch_data_view(request):   # pylint: disable=unused-argument
     """
@@ -44,6 +63,7 @@ class ProductList(generics.ListCreateAPIView):
     """
     queryset = models.Produto.objects.all() # pylint: disable=no-member
     serializer_class = serializers.ProductListSerializer
+    permission_classes = [IsAuthenticated]
     #permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['categoria', 'material', 'cor_padrao']
@@ -57,6 +77,7 @@ class ProductDetail(generics.RetrieveUpdateDestroyAPIView):
     """
     queryset = models.Produto.objects.all() # pylint: disable=no-member
     serializer_class = serializers.ProductDetailSerializer
+    permission_classes = [IsAuthenticated]
     #permission_classes = [permissions.IsAuthenticated]
 
 logger = logging.getLogger(__name__)
