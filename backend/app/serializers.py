@@ -1,14 +1,18 @@
 """Serializers para o app de produtos."""
 
+# pylint: disable=no-member
+
 from rest_framework import serializers
 from . import models
 from .utils.supabase_utils import upload_file_object_to_supabase
 
 class ProdutoImagemSerializer(serializers.ModelSerializer):
+    """Serializer para imagem"""
     imagem = serializers.ImageField(write_only=True)
     url = serializers.URLField(read_only=True)
 
-    class Meta:
+    class Meta: # pylint: disable=too-few-public-methods
+        """Metainformações do ProdutoImagemSerializer."""
         model = models.ProdutoImagem
         fields = ['id', 'produto', 'imagem', 'url', 'criado_em']
         read_only_fields = ['id', 'url', 'criado_em']
@@ -22,8 +26,8 @@ class ProdutoImagemSerializer(serializers.ModelSerializer):
 
 class ProductListSerializer(serializers.ModelSerializer):
     """Serializer para listar e criar produtos (com imagens)."""
-    # Adicione novamente o campo 'imagens'
-    imagens = ProdutoImagemSerializer(many=True, required=False) # required=False para não ser obrigatório na criação
+    imagens = ProdutoImagemSerializer(many=True, required=False)
+    # required=False para não ser obrigatório na criação
 
     class Meta: # pylint: disable=too-few-public-methods
         """Metainformações do ProductListSerializer."""
@@ -33,10 +37,7 @@ class ProductListSerializer(serializers.ModelSerializer):
             'quantidade', 'material', 'cor_padrao', 'altura',
             'comprimento', 'largura', 'imagens' # Inclua 'imagens' aqui
         ]
-        # Remova depth=1. A inclusão do 'ProdutoImagemSerializer' já lida com a profundidade.
-        # depth = 1 # REMOVA ESTA LINHA
 
-    # Mantenha os métodos create e update para manipular as imagens
     def create(self, validated_data):
         imagens_data = validated_data.pop('imagens', [])
         produto = models.Produto.objects.create(**validated_data)
@@ -52,9 +53,9 @@ class ProductListSerializer(serializers.ModelSerializer):
 
         if imagens_data is not None:
             # Remove imagens que não estão mais na lista (se tiver id)
-            # ou aquelas que não foram incluídas na atualização
             current_image_ids = [img.id for img in instance.imagens.all()]
-            incoming_image_ids = [img.get('id') for img in imagens_data if img.get('id') is not None]
+            incoming_image_ids = [img.get('id') for img in imagens_data if img.get('id')
+                                  is not None]
 
             # Deleta as imagens antigas que não foram enviadas na requisição de atualização
             models.ProdutoImagem.objects.filter(
@@ -71,12 +72,22 @@ class ProductListSerializer(serializers.ModelSerializer):
                         img.url = img_data.get('url', img.url) # Atualiza URL se fornecida
                         img.save()
                     except models.ProdutoImagem.DoesNotExist:
-                        # Se o ID for fornecido mas a imagem não existir para este produto, cria uma nova
+                        # Se o ID for fornecido mas a imagem não existir para este produto
+                        # cria uma nova
                         models.ProdutoImagem.objects.create(produto=instance, **img_data)
                 else:
                     # Cria uma nova imagem se não tiver ID
                     models.ProdutoImagem.objects.create(produto=instance, **img_data)
         return instance
+
+    def validate_categoria(self, value):
+        """Valida que a categoria esteja entre as possíveis do front-end"""
+        categorias_validas = ['infantil', 'masculino', 'feminino', 'termicas']
+        if value not in categorias_validas:
+        # Ajustado para as categorias no front-end
+            raise serializers.ValidationError(
+                "A categoria deve ser: feminino, masculino, infantil, termicas")
+        return value
 
     def validate_quantidade(self, value):
         """Valida que a quantidade não seja negativa."""
@@ -111,7 +122,6 @@ class ProductListSerializer(serializers.ModelSerializer):
 
 class ProductDetailSerializer(serializers.ModelSerializer):
     """Serializer para detalhes de um produto (com imagens)."""
-    # Adicione novamente o campo 'imagens'
     imagens = ProdutoImagemSerializer(many=True, required=False)
 
     class Meta: # pylint: disable=too-few-public-methods
@@ -120,12 +130,9 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'titulo', 'descricao', 'categoria', 'preco',
             'quantidade', 'material', 'cor_padrao', 'altura',
-            'comprimento', 'largura', 'imagens' # Inclua 'imagens' aqui
+            'comprimento', 'largura', 'imagens' 
         ]
-        # Remova depth=1
-        # depth = 1 # REMOVA ESTA LINHA
 
-    # Mantenha os métodos create e update para manipular as imagens (idênticos ao ProductListSerializer)
     def create(self, validated_data):
         imagens_data = validated_data.pop('imagens', [])
         produto = models.Produto.objects.create(**validated_data)
@@ -141,7 +148,8 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
         if imagens_data is not None:
             current_image_ids = [img.id for img in instance.imagens.all()]
-            incoming_image_ids = [img.get('id') for img in imagens_data if img.get('id') is not None]
+            incoming_image_ids = [img.get('id') for img in imagens_data if img.get('id')
+                                  is not None]
 
             models.ProdutoImagem.objects.filter(
                 produto=instance,
@@ -160,6 +168,15 @@ class ProductDetailSerializer(serializers.ModelSerializer):
                 else:
                     models.ProdutoImagem.objects.create(produto=instance, **img_data)
         return instance
+
+    def validate_categoria(self, value):
+        """Valida que a categoria esteja entre as possíveis do front-end"""
+        categorias_validas = ['infantil', 'masculino', 'feminino', 'termicas']
+        if value not in categorias_validas:
+        # Ajustado para as categorias no front-end
+            raise serializers.ValidationError(
+                "A categoria deve ser: feminino, masculino, infantil, termicas")
+        return value
 
     def validate_quantidade(self, value):
         """Valida que a quantidade não seja negativa."""

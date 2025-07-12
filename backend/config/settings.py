@@ -11,8 +11,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 from pathlib import Path
 import os
-import environ
 import sys
+import environ
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -158,10 +158,9 @@ STATIC_URL = 'static/'
 
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
-# Suas credenciais já estão no .env, vamos usá-las aqui
 SUPABASE_PROJECT_ID = env('SUPABASE_URL').split('.')[0].replace('https://', '')
 SUPABASE_SERVICE_KEY = env('SUPABASE_KEY')
-SUPABASE_BUCKET_NAME = 'imagens-produtos' # Ou o nome do seu bucket
+SUPABASE_BUCKET_NAME = 'imagens-produtos'
 
 # Configurações para o django-storages
 AWS_ACCESS_KEY_ID = SUPABASE_PROJECT_ID
@@ -177,7 +176,6 @@ AWS_DEFAULT_ACL = None # O Supabase gerencia as permissões no bucket
 AWS_LOCATION = 'media' # Cria uma pasta "media" dentro do bucket para organizar
 
 # URL pública para acessar os arquivos
-# IMPORTANTE: A URL do seu bucket deve ser esta
 MEDIA_URL = f'{AWS_S3_ENDPOINT_URL}/object/public/{AWS_STORAGE_BUCKET_NAME}/{AWS_LOCATION}/'
 
 # Default primary key field type

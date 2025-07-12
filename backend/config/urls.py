@@ -17,16 +17,16 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
-from app import views
 from django.conf.urls.static import static
+from app import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('fetch-data/', views.fetch_data_view, name='fetch_data'),
     path('insert-data/', views.insert_data_view, name='insert_data'),
     path('', views.home, name='home'),
-    path('api/', include('app.urls'))
-   # path('api-auth/',include('rest_framework.urls'))
+    path('api/', include('app.urls')),
+    #path('api-auth/',include('rest_framework.urls'))
 ]
 
 if settings.DEBUG:

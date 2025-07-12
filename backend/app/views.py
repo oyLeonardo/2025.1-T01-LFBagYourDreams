@@ -1,23 +1,16 @@
 """Views do aplicativo para lidar com produtos e integração com Supabase."""
 
+import logging
 from django.http import JsonResponse, HttpResponse
-from rest_framework import generics, permissions, filters
+from django.db import DatabaseError
+from rest_framework import generics, filters, status #permissions
 from rest_framework.views import APIView
-from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
+from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
+
 from .utils.supabase_utils import fetch_from_supabase, insert_to_supabase
-from . import serializers
-from . import models
-from rest_framework.response import Response  # <<< O QUE FALTOU AGORA
-from rest_framework import status
-
-# Imports de bibliotecas externas
-from botocore.exceptions import ClientError
-
-# Imports locais do seu projeto
+from . import serializers, models
 from .serializers import ProdutoImagemSerializer
-
 
 def fetch_data_view(request):   # pylint: disable=unused-argument
     """
@@ -64,41 +57,32 @@ class ProductDetail(generics.RetrieveUpdateDestroyAPIView):
     """
     queryset = models.Produto.objects.all() # pylint: disable=no-member
     serializer_class = serializers.ProductDetailSerializer
-   # permission_classes = [permissions.IsAuthenticated]
+    #permission_classes = [permissions.IsAuthenticated]
+
+logger = logging.getLogger(__name__)
 
 class ImageUploadView(APIView):
     """
-    Versão de depuração da view de upload para capturar erros silenciosos.
+    View para upload de imagens de produtos.
     """
     serializer_class = ProdutoImagemSerializer
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request):
+        """
+        Lida com upload de imagens de produto via POST.
+        """
         serializer = self.serializer_class(data=request.data)
+
         if not serializer.is_valid():
-            # Se os dados iniciais forem inválidos (ex: produto não existe), retorna o erro padrão.
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        print(">>> serializer.is_valid() passou. Tentando salvar...")
-
         try:
-            # A linha serializer.save() é onde a mágica (e o erro silencioso) acontece.
-            # Ela cria o objeto no banco E faz o upload do arquivo para o Supabase.
             serializer.save()
-
-            # Se chegarmos aqui, significa que nenhuma exceção foi levantada.
-            print(">>> SUCESSO APARENTE: serializer.save() foi concluído sem exceções.")
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        except ClientError as e: # <<< MUDANÇA AQUI
-             # Erro específico do Boto3 (comunicação com S3/Supabase)
-             print("--------------------------------------------------")
-             print(">>> ERRO BOTOCORE (S3/SUPABASE) DETECTADO! <<<")
-
-        except Exception as e:
-            # Pega qualquer outro erro inesperado que possa ter acontecido.
-            print("--------------------------------------------------")
-            print(">>> ERRO GENÉRICO DETECTADO! <<<")
-            print(f"Tipo do Erro: {type(e)}")
-            print(f"Mensagem: {e}")
-            print("--------------------------------------------------")
-            return Response({'detail': f'Ocorreu um erro inesperado no servidor: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except DatabaseError:
+            logger.exception("Erro ao salvar imagem no banco de dados.")
+            return Response(
+                {'detail': 'Erro ao salvar no banco de dados.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
