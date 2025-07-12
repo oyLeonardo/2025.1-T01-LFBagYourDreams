@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import { useCart } from '../components/CartContext';
 
 interface ImagemProduto {
   id: number;
@@ -25,11 +26,13 @@ interface Produto {
 
 function ProdutoPage() {
   const { id } = useParams();
+  const { addToCart } = useCart();
   const navigate = useNavigate();
   const [produto, setProduto] = useState<Produto | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [quantidade, setQuantidade] = useState(1);
+  const [mostrarConfirmacao, setMostrarConfirmacao] = useState(false);
 
   const API_LISTA_PRODUTOS = 'http://localhost:8000/api/products/';
 
@@ -39,7 +42,6 @@ function ProdutoPage() {
       setErro(null);
       
       try {
-        // Busca apenas a lista completa
         const response = await fetch(API_LISTA_PRODUTOS);
         
         if (!response.ok) {
@@ -47,8 +49,6 @@ function ProdutoPage() {
         }
         
         const todosProdutos = await response.json();
-        
-        // Encontra o produto pelo ID
         const produtoEncontrado = todosProdutos.find((p: Produto) => p.id === Number(id));
 
         if (!produtoEncontrado) {
@@ -69,14 +69,26 @@ function ProdutoPage() {
 
   const adicionarAoCarrinho = () => {
     if (produto) {
-      alert(`${quantidade} ${produto.titulo} adicionado(s) ao carrinho!`);
-      // Implemente a lógica real do carrinho aqui
+      const cartItem = {
+        id: produto.id,
+        titulo: produto.titulo,
+        preco: produto.preco,
+        quantidade: quantidade,
+        imagem_url: produto.imagens.length > 0 ? produto.imagens[0].url : 'https://via.placeholder.com/300x300?text=Sem+imagem',
+        cor_padrao: produto.cor_padrao
+      };
+
+      addToCart(cartItem);
+      setMostrarConfirmacao(true);
+      
+      setTimeout(() => {
+        setMostrarConfirmacao(false);
+      }, 3000);
     }
   };
 
   const getCorClass = (corNome: string): string => {
     const cores: Record<string, string> = {
-      // Cores básicas
       'vermelho': 'bg-red-500',
       'azul': 'bg-blue-500',
       'verde': 'bg-green-500',
@@ -84,15 +96,11 @@ function ProdutoPage() {
       'preto': 'bg-black',
       'branco': 'bg-white border border-gray-300',
       'cinza': 'bg-gray-400',
-      
-      // Cores adicionais
       'rosa': 'bg-pink-400',
       'roxo': 'bg-purple-500',
       'laranja': 'bg-orange-500',
       'dourado': 'bg-amber-400',
       'prata': 'bg-gray-300',
-      
-      // Novas cores solicitadas
       'verde militar': 'bg-green-800',
       'vinho': 'bg-red-800',
       'marrom': 'bg-amber-800',
@@ -113,11 +121,9 @@ function ProdutoPage() {
       'vinho tinto': 'bg-red-900',
       'verde musgo': 'bg-green-700',
       'azul celeste': 'bg-blue-200',
-      
-      // Padrão para cores não mapeadas
     };
     
-    return cores[corNome.toLowerCase()] || 'bg-gray-200 border border-gray-300'; // Cor padrão cinza claro
+    return cores[corNome.toLowerCase()] || 'bg-gray-200 border border-gray-300';
   };
 
   if (carregando) {
@@ -159,6 +165,18 @@ function ProdutoPage() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
+      
+      {/* Notificação de adicionado ao carrinho */}
+      {mostrarConfirmacao && (
+        <div className="fixed top-4 right-4 z-50">
+          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg shadow-lg flex items-center animate-fadeInOut">
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <span>{quantidade} {produto.titulo} adicionado(s) ao carrinho!</span>
+          </div>
+        </div>
+      )}
       
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <button 
@@ -206,7 +224,7 @@ function ProdutoPage() {
                 <p className="font-medium text-gray-800">Cor padrão:</p>
                   <div 
                     className={`w-5 h-5 rounded-full border border-gray-300 ${getCorClass(produto.cor_padrao)}`}
-                    title={produto.cor_padrao} // Tooltip com o nome da cor
+                    title={produto.cor_padrao}
                   ></div>
               </div>
               
@@ -236,14 +254,18 @@ function ProdutoPage() {
                 
                 <button
                   onClick={adicionarAoCarrinho}
-                  disabled={produto.quantidade === 0}
+                  disabled={produto.quantidade === 0 || quantidade > produto.quantidade}
                   className={`w-full py-3 px-4 rounded-lg font-medium ${
-                    produto.quantidade === 0 
+                    produto.quantidade === 0 || quantidade > produto.quantidade
                       ? 'bg-gray-400 cursor-not-allowed' 
                       : 'bg-green-900 text-white hover:bg-green-950'
                   }`}
                 >
-                  {produto.quantidade === 0 ? 'Produto Esgotado' : 'Adicionar ao Carrinho'}
+                  {produto.quantidade === 0 
+                    ? 'Produto Esgotado' 
+                    : quantidade > produto.quantidade
+                      ? 'Quantidade indisponível'
+                      : 'Adicionar ao Carrinho'}
                 </button>
               </div>
             </div>

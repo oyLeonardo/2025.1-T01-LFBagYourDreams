@@ -7,6 +7,8 @@ import HomePage from './pages/HomePage';
 import CatalogoPage from './pages/CatalogoPage';
 import DetalheProdutoPage from './pages/DetalheProdutoPage';
 import ProdutoPageCatalogo from './pages/ProdutoPageCatalogo';
+import CheckoutPage from './pages/CheckoutPage';
+import Carrinho from './components/Carrinho';
 
 function App() {
   return (
@@ -20,10 +22,13 @@ function App() {
             <Route path="adicionarproduto" element={<AdicionarProdutoPage />} />
             <Route path="produto/:produtoId" element={<DetalheProdutoPage />} />
           </Route>
+          
           <Route path="/" element={<HomePage />} />
           <Route path="/categoria/:categoria" element={<CatalogoPage />} />
           <Route path="/produto/:id" element={<ProdutoPageCatalogo />} />
           <Route path="/produto/:id" element={<ProdutoPageCatalogo />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/carrinho" element={<Carrinho />} />
           
           <Route path="*" element={
             <div className="min-h-screen flex items-center justify-center">
