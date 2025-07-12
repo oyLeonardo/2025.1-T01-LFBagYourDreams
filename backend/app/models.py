@@ -67,6 +67,23 @@ class Produto(models.Model):    # pylint: disable=too-few-public-methods
         db_table = 'produto'
         managed = False
 
+class ProdutoImagem(models.Model):
+    produto = models.ForeignKey(
+        Produto,
+        on_delete=models.CASCADE,
+        related_name='imagens'
+    )
+    # TROCAMOS URLField POR ImageField
+    # O 'upload_to' define a subpasta dentro do AWS_LOCATION ('media/')
+    url = models.URLField()
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'produto_imagem'
+        managed = True # Correto, pois queremos que o Django gerencie esta tabela
+
+    def __str__(self):
+        return f"Imagem do produto {self.produto.titulo}"
 
 class ProdutoCarrinho(models.Model):    # pylint: disable=too-few-public-methods
     """Relaciona produtos com carrinhos de compra."""

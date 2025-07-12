@@ -1,25 +1,111 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponse
-from .utils.supabase_utils import fetch_from_supabase, insert_to_supabase
 from django.views import View
-from django.urls import reverse
-from .services.mercadopago_service import MercadoPagoService
-from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
-from .models import Carrinho, Cor, Personalizacao, Produto, ProdutoCarrinho, Pedido
-from .serializers import CarrinhoSerializer, CorSerializer, PersonalizacaoSerializer, ProdutoSerializer, ProdutoCarrinhoSerializer, PedidoSerializer
-import logging
+from django.urls import reverse
+from django.conf import settings
 from django.db import transaction
-import json
+from django_filters.rest_framework import DjangoFilterBackend
+from .utils.supabase_utils import fetch_from_supabase, insert_to_supabase
+from .services.mercadopago_service import MercadoPagoService
+from . import models
+from . import serializers
+from .models import Carrinho, Cor, Personalizacao, Produto, ProdutoCarrinho, Pedido
+from .serializers import CarrinhoSerializer, CorSerializer, PersonalizacaoSerializer, ProdutoSerializer, ProdutoCarrinhoSerializer, PedidoSerializer, ProdutoImagemSerializer
 import logging
+import json
 from datetime import datetime
-from rest_framework import generics, status
-from rest_framework.response import Response
+from rest_framework import generics, permissions, filters, status
+from rest_framework.views import APIView
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
+from rest_framework.response import 
 
-# Create your views here.
+# Imports de bibliotecas externas
+from botocore.exceptions import ClientError
 
 def home_view(request):
     return HttpResponse("Bem-vindo à página inicial do backend!")
+
+
+def fetch_data_view(request):   # pylint: disable=unused-argument
+    
+    #View para buscar dados da Supabase e retornar como JSON.
+    
+    data = fetch_from_supabase('')
+    return JsonResponse(data, safe=False)
+
+
+def insert_data_view(request):  # pylint: disable=unused-argument
+    
+    #View para inserir dados na Supabase via POST.
+    
+    if request.method == 'POST':
+        data = request.POST.dict()
+        response = insert_to_supabase('', data)
+        return JsonResponse(response, safe=False)
+
+    return HttpResponse(status=405)  # Método não permitido
+    
+
+class ProductList(generics.ListCreateAPIView):
+    
+    #API view para listar e criar produtos.
+    
+    queryset = models.Produto.objects.all() # pylint: disable=no-member
+    serializer_class = serializers.ProductListSerializer
+    #permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['categoria', 'material', 'cor_padrao']
+    search_fields = ['titulo', 'descricao']
+    ordering_fields = ['preco', 'quantidade']
+    ordering = ['preco']  # padrão
+
+class ProductDetail(generics.RetrieveUpdateDestroyAPIView):
+    
+    #API view para recuperar, atualizar ou deletar um produto específico.
+    
+    queryset = models.Produto.objects.all() # pylint: disable=no-member
+    serializer_class = serializers.ProductDetailSerializer
+   # permission_classes = [permissions.IsAuthenticated]
+
+class ImageUploadView(APIView):
+    
+    #Versão de depuração da view de upload para capturar erros silenciosos.
+    
+    serializer_class = ProdutoImagemSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        if not serializer.is_valid():
+            # Se os dados iniciais forem inválidos (ex: produto não existe), retorna o erro padrão.
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        print(">>> serializer.is_valid() passou. Tentando salvar...")
+
+        try:
+            # A linha serializer.save() é onde a mágica (e o erro silencioso) acontece.
+            # Ela cria o objeto no banco E faz o upload do arquivo para o Supabase.
+            serializer.save()
+
+            # Se chegarmos aqui, significa que nenhuma exceção foi levantada.
+            print(">>> SUCESSO APARENTE: serializer.save() foi concluído sem exceções.")
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        except ClientError as e: # <<< MUDANÇA AQUI
+             # Erro específico do Boto3 (comunicação com S3/Supabase)
+             print("--------------------------------------------------")
+             print(">>> ERRO BOTOCORE (S3/SUPABASE) DETECTADO! <<<")
+
+        except Exception as e:
+            # Pega qualquer outro erro inesperado que possa ter acontecido.
+            print("--------------------------------------------------")
+            print(">>> ERRO GENÉRICO DETECTADO! <<<")
+            print(f"Tipo do Erro: {type(e)}")
+            print(f"Mensagem: {e}")
+            print("--------------------------------------------------")
+            return Response({'detail': f'Ocorreu um erro inesperado no servidor: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 logger = logging.getLogger(__name__)
 
@@ -145,14 +231,3 @@ def mercadopago_webhook(request):
             logger.error(f"Erro inesperado no webhook: {e}", exc_info=True)
             return JsonResponse({"status": "error", "message": str(e)}, status=500)
     return JsonResponse({"status": "method not allowed"}, status=405)
-
-def fetch_data_view(request):
-    data = fetch_from_supabase('')
-    return JsonResponse(data, safe=False)
-
-def insert_data_view(request):
-    if request.method == 'POST':
-        data = request.POST.dict()
-        response = insert_to_supabase('', data)
-        return JsonResponse(response, safe=False)
-    

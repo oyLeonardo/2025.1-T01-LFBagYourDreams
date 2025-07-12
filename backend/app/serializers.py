@@ -1,5 +1,7 @@
-from rest_framework import serializers
+from rest_framework import 
+from . import models
 from .models import Carrinho, Cor, Personalizacao, Produto, ProdutoCarrinho, Pedido
+from .utils.supabase_utils import upload_file_object_to_supabase
 
 class CarrinhoSerializer(serializers.ModelSerializer):
     class Meta:
