@@ -4,30 +4,34 @@ import {
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { useMemo, useState } from 'react';
-import { defaultData, type Person } from '../__mocks__/datamockadapedidos';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const columnHelper = createColumnHelper<Person>();
+interface Pedido {
+  id: number;
+  status: string;
+  valor_total: number;
+  frete: number;
+  criado_em: string;
+}
+
+const columnHelper = createColumnHelper<Pedido>();
 
 const columns = [
-  columnHelper.accessor('produto', {
-    cell: (info) => info.getValue(),
-    header: 'Produto',
-  }),
-  columnHelper.accessor('estoque', {
-    cell: (info) => <i>{info.getValue()}</i>,
-    header: 'Estoque',
-  }),
-  columnHelper.accessor('data', {
-    header: 'Data',
-    cell: (info) => info.renderValue(),
-  }),
   columnHelper.accessor('status', {
+    cell: (info) => info.getValue(),
     header: 'Status',
   }),
-  columnHelper.accessor('preco', {
-    header: 'Preço',
+  columnHelper.accessor('valor_total', {
+    cell: (info) => `R$ ${info.getValue().toFixed(2)}`,
+    header: 'Valor Total',
+  }),
+  columnHelper.accessor('frete', {
+    header: 'Frete',
+    cell: (info) => `R$ ${info.getValue().toFixed(2)}`,
+  }),
+  columnHelper.accessor('criado_em', {
+    header: 'Criado Em',
   }),
 ];
 
@@ -35,17 +39,48 @@ function TabelaPedidos() {
   const [pageIndex, setPageIndex] = useState(0);
   const pageSize = 10;
   const navigate = useNavigate();
+  const [pedidos, setPedidos] = useState<Pedido[]>([]);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState<string | null>(null);
+  
+  const API_URL = 'http://localhost:8000/api/orders/';
+    
+    useEffect(() => {
+      fetchData(API_URL);
+    }, []);
+    
+    function fetchData(baseUrl: string) {
+      setCarregando(true);
+      setErro(null);
+      
+      fetch(baseUrl)
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`Erro HTTP: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then((data) => {
+          setPedidos(data);
+        })
+        .catch((error) => {
+          console.error('Erro ao buscar pedidos:', error);
+          setErro('Não foi possível carregar os pedidos. Tente novamente mais tarde.');
+        })
+        .finally(() => {
+          setCarregando(false);
+        });
+    }
 
-
-  const handleRowClick = (pedido: Person) => {
-    navigate(`/pedido/${pedido.produto}`); //aqui deveria ser .id mas os dados estão mockados e eu não fiz um id para eles kkkkkkkk
-  }; 
+  const handleRowClick = (pedido: Pedido) => {
+    navigate(`/pedido/${pedido.id}`);
+  };
 
   const paginatedData = useMemo(() => {
     const start = pageIndex * pageSize;
     const end = start + pageSize; 
-    return defaultData.slice(start, end);
-  }, [pageIndex, pageSize]); 
+    return pedidos.slice(start, end);
+  }, [pageIndex, pageSize, pedidos]);
 
   const table = useReactTable({
     data: paginatedData,
@@ -53,7 +88,33 @@ function TabelaPedidos() {
     getCoreRowModel: getCoreRowModel(),
   });
 
-  const totalPages = Math.ceil(defaultData.length / pageSize);
+  const totalPages = Math.ceil(pedidos.length / pageSize);
+
+  if (carregando) {
+    return (
+      <div className="p-7 bg-[#f3f3f3] rounded-xl shadow-sm max-w-5xl mx-auto mt-10">
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-600"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (erro) {
+    return (
+      <div className="p-7 bg-[#f3f3f3] rounded-xl shadow-sm max-w-5xl mx-auto mt-10">
+        <div className="flex flex-col justify-center items-center h-64">
+          <div className="text-lg text-red-600 mb-4">{erro}</div>
+          <button 
+            onClick={() => fetchData(API_URL)}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-7 bg-[#f3f3f3] rounded-xl shadow-sm max-w-5xl mx-auto mt-10">

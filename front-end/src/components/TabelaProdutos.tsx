@@ -41,7 +41,7 @@ const columns = [
   }),
   columnHelper.accessor('preco', {
     header: 'Preço',
-    cell: (info) => info.renderValue(),
+    cell: (info) => `R$ ${info.getValue().toFixed(2)}`,
   }),
   columnHelper.accessor('categoria', {
     header: 'Categoria',
@@ -108,7 +108,7 @@ function TabelaProdutos() {
     return (
       <div className="p-7 bg-[#f3f3f3] rounded-xl shadow-sm max-w-5xl mx-auto mt-10">
         <div className="flex justify-center items-center h-64">
-          <div className="text-lg">Carregando produtos...</div>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-600"></div>
         </div>
       </div>
     );

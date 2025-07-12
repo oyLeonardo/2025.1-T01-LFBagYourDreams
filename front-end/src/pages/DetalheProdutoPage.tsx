@@ -1,14 +1,36 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { defaultData, type Product } from '../__mocks__/datamockadaprodutos';
 import Button from '../components/Button';
+
+interface ImagemProduto {
+  id: number;
+  url: string;
+  criado_em: string;
+}
+
+interface Produto {
+  id: number;
+  titulo: string;
+  descricao: string;
+  categoria: string;
+  preco: number;
+  quantidade: number;
+  material: string;
+  cor_padrao: string;
+  altura: number | null;
+  comprimento: number | null;
+  largura: number | null;
+  imagens: ImagemProduto[];
+}
 
 function DetalheProdutoPage() {
     const { produtoId } = useParams<{ produtoId: string }>();
     const navigate = useNavigate();
-    const [produto, setProduto] = useState<Product | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [produto, setProduto] = useState<Produto | null>(null);
+    const [carregando, setCarregando] = useState(true);
     const [editmodal, setEditModal] = useState(false);
+    const [erro, setErro] = useState<string | null>(null);
+
     const handleCancelExit = () => {
         setEditModal(false); // Fecha o modal sem sair
     }
@@ -18,54 +40,79 @@ function DetalheProdutoPage() {
         navigate('/'); // Redireciona para a página inicial
     }
 
+    const deletarProduto = async () => {
+        if (!produto || !produtoId) return;
+        
+        try {
+            setCarregando(true);
+            
+            const response = await fetch(`http://localhost:8000/api/product/${produtoId}/`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            
+            if (response.ok) {
+                alert('Produto deletado com sucesso!');
+                navigate('/admin/produtos');
+            } else {
+                throw new Error(`Erro ao deletar: ${response.status}`);
+            }
+        } catch (error) {
+            console.error('Erro ao deletar produto:', error);
+            alert('Erro ao deletar produto. Tente novamente.');
+        } finally {
+            setCarregando(false);
+        }
+    };
+
+    const confirmarDelecao = () => {
+        if (window.confirm(`Tem certeza que deseja excluir o produto "${produto?.titulo}"? Esta ação não pode ser desfeita.`)) {
+            deletarProduto();
+        }
+    };
+
     useEffect(() => {
         if (!produtoId) {
-            setLoading(false);
+            setCarregando(false);
             return;
         }
 
-        // Função para buscar produto por ID
         const fetchProduto = async () => {
             try {
-                setLoading(true);
+                setCarregando(true);
                 
                 // Primeiro tenta buscar do backend
-                const response = await fetch(`http://localhost:8000/api/products/${produtoId}`);
+                const response = await fetch(`http://localhost:8000/api/product/${produtoId}`);
                 
                 if (response.ok) {
                     const data = await response.json();
                     setProduto(data);
                 } else {
                     // Fallback para dados mockados (durante desenvolvimento)
-                    console.log('Backend não disponível, usando dados mockados');
-                    const produtoEncontrado = defaultData.find(
-                        p => p.id.toString() === produtoId
-                    );
-                    setProduto(produtoEncontrado || null);
+                    console.log('Backend não disponível');
+                    setProduto(produto || null);
                 }
             } catch (error) {
                 console.error('Erro ao buscar produto:', error);
-                
-                // Fallback para dados mockados
-                const produtoEncontrado = defaultData.find(
-                    p => p.id.toString() === produtoId
-                );
-                setProduto(produtoEncontrado || null);
+                setErro('Não foi possível carregar o produto. Tente novamente mais tarde.');
             } finally {
-                setLoading(false);
+                setCarregando(false);
             }
         };
-
         fetchProduto();
     }, [produtoId]);
 
-    if (loading) {
-        return (
-            <div className="flex justify-center items-center h-screen">
-                <div className="text-lg">Carregando...</div>
-            </div>
-        );
-    }
+    if (carregando) {
+    return (
+      <div className="p-7 bg-[#f3f3f3] rounded-xl shadow-sm max-w-5xl mx-auto mt-10">
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-600"></div>
+        </div>
+      </div>
+    );
+  }
 
     if (!produto) {
         return (
@@ -127,45 +174,52 @@ function DetalheProdutoPage() {
 
             <div className="bg-white rounded-lg shadow-lg p-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {/* Imagem do produto */}
-                    <div className="bg-gray-200 rounded-lg h-96 flex items-center justify-center">
-                        <span className="text-gray-500">Imagem do produto</span>
+                    <div className="bg-gray-200 rounded-lg min-h-64 max-h-96 overflow-hidden">
+                        {produto.imagens && produto.imagens.length > 0 ? (
+                            <img 
+                                src={produto.imagens[0].url} 
+                                alt={produto.titulo} 
+                                className="w-full h-auto max-h-96 object-contain rounded-lg"
+                                onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                    const parent = target.parentElement;
+                                    if (parent) {
+                                        parent.innerHTML = '<div class="h-64 flex items-center justify-center"><span class="text-gray-500">Erro ao carregar imagem</span></div>';
+                                    }
+                                }}
+                            />
+                        ) : (
+                            <div className="h-64 flex items-center justify-center">
+                                <span className="text-gray-500">Imagem do produto</span>
+                            </div>
+                        )}
                     </div>
 
                     {/* Informações do produto */}
                     <div className="space-y-4">
                         <h1 className="text-3xl font-bold text-gray-800">
-                            {produto.produto}
+                            {produto.titulo}
                         </h1>
                         
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <h3 className="font-semibold text-gray-600">Preço:</h3>
                                 <p className="text-2xl font-bold text-green-600">
-                                    {produto.preco} R$
+                                    R${produto.preco} 
                                 </p>
                             </div>
                             
                             <div>
                                 <h3 className="font-semibold text-gray-600">Estoque:</h3>
-                                <p className="text-lg">{produto.estoque}</p>
+                                <p className="text-lg">{produto.quantidade}</p>
                             </div>
-                            
+
                             <div>
-                                <h3 className="font-semibold text-gray-600">Status:</h3>
-                                <span className={`px-2 py-1 rounded text-sm ${
-                                    produto.status === 'Ativo' 
-                                        ? 'bg-green-100 text-green-800' 
-                                        : 'bg-red-100 text-red-800'
-                                }`}>
-                                    {produto.status}
-                                </span>
+                                <h3 className="font-semibold text-gray-600">Material:</h3>
+                                <p className="text-lg">{produto.material}</p>
                             </div>
-                            
-                            <div>
-                                <h3 className="font-semibold text-gray-600">Data:</h3>
-                                <p className="text-lg">{produto.data}</p>
-                            </div>
+                           
                         </div>
 
                         {/* Botões de ação */}
@@ -178,12 +232,7 @@ function DetalheProdutoPage() {
                             <Button 
                                 name="Excluir Produto" 
                                 color="red" 
-                                onClick={() => {
-                                    if (confirm('Tem certeza que deseja excluir este produto?')) {
-                                        // Lógica para excluir (chamada API)
-                                        navigate('/admin/produtos');
-                                    }
-                                }}
+                                onClick={confirmarDelecao}
                             />
                         </div>
                     </div>
