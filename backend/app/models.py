@@ -83,8 +83,8 @@ class Pedido(models.Model):
     mercadopago_preference_id = models.CharField(max_length=255, blank=True, null=True)
     mercadopago_payment_id = models.CharField(max_length=255, blank=True, null=True)
     status = models.CharField(max_length=50, default='pending') # Ex: pending, approved, rejected
-    frete = models.CharField(max_length=9)
-    valor_total = models.CharField(max_length=9)
+    frete = models.FloatField(blank=True, null=True)
+    valor_total = models.FloatField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     external_reference = models.CharField(max_length=255, unique=True, null=True, blank=True)
