@@ -5,20 +5,20 @@ import { useState } from "react"
 
 function AdicionarProdutoPage(){
     const navigate = useNavigate()
-    
-    // Estado para o modal de confirmação
+    const [carregando, setCarregando] = useState(false);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
 
     const [formData, setFormData] = useState({
-        nome: '',
-        descricao: '',
-        categoria: 'Bolsa',
-        preco: '',
-        material: 'material1',
-        cor: '',
-        comprimento: '',
-        altura: '',
-        largura: '',
+        titulo: "",
+        quantidade: "",
+        descricao: "",
+        categoria: "",
+        preco: "",
+        material: "",
+        cor_padrao: "",
+        comprimento: "",
+        altura: "",
+        largura: "",
         imagem: null as File | null
     });
 
@@ -51,23 +51,91 @@ function AdicionarProdutoPage(){
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         
-        // Validação básica
-        if (!formData.nome || !formData.preco) {
-            alert('Nome e preço são obrigatórios!');
+        // Validação mais robusta
+        const erros = [];
+        
+        if (!formData.titulo.trim()) erros.push('Título é obrigatório');
+        if (!formData.preco || parseFloat(formData.preco) <= 0) erros.push('Preço deve ser maior que zero');
+        if (!formData.categoria) erros.push('Categoria é obrigatória');
+        if (!formData.material) erros.push('Material é obrigatório');
+        if (!formData.imagem) erros.push('Imagem é obrigatória');
+        if (!formData.quantidade || parseInt(formData.quantidade) < 0) erros.push('Quantidade deve ser maior ou igual a zero');
+        
+        if (erros.length > 0) {
+            alert('Erros encontrados:\n' + erros.join('\n'));
             return;
         }
+        
         
         // Mostrar modal de confirmação
         setShowConfirmModal(true);
     };
 
-    const handleConfirmSave = () => {
-        // Salvar aqui os dados para a api
-        console.log('Dados do produto:', formData);
-        
-        // Fechar modal e navegar
-        setShowConfirmModal(false);
-        navigate('/admin/produtos');
+    const handleConfirmSave = async () => {
+        try {
+            setCarregando(true);
+            
+            // Preparar dados para envio (sem imagem)
+            const dadosParaEnvio = {
+                titulo: formData.titulo,
+                quantidade: parseInt(formData.quantidade) || 1,
+                descricao: formData.descricao,
+                categoria: formData.categoria,
+                preco: parseFloat(formData.preco) || 0,
+                material: formData.material,
+                cor_padrao: formData.cor_padrao,
+                comprimento: formData.comprimento ? parseFloat(formData.comprimento) : null,
+                altura: formData.altura ? parseFloat(formData.altura) : null,
+                largura: formData.largura ? parseFloat(formData.largura) : null,
+            };
+
+            console.log('Dados para envio:', dadosParaEnvio);
+            let response;
+            
+            if (formData.imagem) {
+                const formDataToSend = new FormData();
+                
+                Object.entries(dadosParaEnvio).forEach(([key, value]) => {
+                    if (value !== null && value !== undefined) {
+                        formDataToSend.append(key, value.toString());
+                    }
+                });
+                
+                formDataToSend.append('imagem', formData.imagem);
+                
+                response = await fetch('http://localhost:8000/api/products/', {
+                    method: 'POST',
+                    body: formDataToSend // FormData não precisa de Content-Type
+                });
+            } else {
+                alert('Imagem não fornecid.');
+                response = await fetch('http://localhost:8000/api/products/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(dadosParaEnvio)
+                });
+            }
+
+            if (response.ok) {
+                const resultado = await response.json();
+                console.log('Produto criado:', resultado);
+                alert('Produto adicionado com sucesso!');
+                setShowConfirmModal(false);
+                navigate('/admin/produtos');
+            } else {
+                const errorData = await response.text();
+                console.error('Erro na resposta:', errorData);
+                throw new Error(`Erro ${response.status}: ${errorData}`);
+            }
+        } catch (error) {
+            console.error('Erro ao adicionar produto:', error);
+            const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+            alert(`Erro ao adicionar produto: ${errorMessage}`);
+        } finally {
+            setCarregando(false);
+        }
     };
 
     const handleCancelSave = () => {
@@ -99,7 +167,7 @@ function AdicionarProdutoPage(){
                                     onClick={handleCancelSave}
                                 />
                                 <Button 
-                                    name="Salvar" 
+                                    name={carregando ? "Salvando..." : "Salvar"} 
                                     color="bggreen" 
                                     onClick={handleConfirmSave}
                                 />
@@ -119,7 +187,7 @@ function AdicionarProdutoPage(){
                     <div className="flex flex-col gap-3 w-full">
                         <div>
                             <label className="font-bold">Nome do Produto</label>
-                            <InputText placeholder="Nome" value={formData.nome} onChange={(e) => handleInputChange('nome', e.target.value)}></InputText>
+                            <InputText placeholder="Nome" value={formData.titulo} onChange={(e) => handleInputChange('titulo', e.target.value)}></InputText>
                         </div>
                         <div>
                             <label className="font-bold">Descrição</label>
@@ -130,27 +198,38 @@ function AdicionarProdutoPage(){
                              <label className="font-bold" htmlFor="categoria">Categoria:</label>
 
                             <select value={formData.categoria} onChange={(e) => handleInputChange('categoria', e.target.value)} className="flex border-solid items-start px-2 justify-items-start p-2 text-start border-1 rounded-md w-full outline-0 shadow-sm" name="categoria" id="categoria">
+                            <option value="">Selecione uma categoria</option>
                             <option value="Bolsa">Bolsa</option>
+                            <option value="Mochila">Mochila</option>
+                            <option value="Carteira">Carteira</option>
+                            <option value="Acessorio">Acessório</option>
                             </select> 
                         </div>
                         <div className="flex flex-row gap-2">
                             <div className="w-full">
                                 <label className="font-bold">Preço</label>
-                                <InputText value={formData.preco} onChange={(e) => handleInputChange('preco', e.target.value)}  placeholder="Preço"></InputText>
+                                <InputText value={formData.preco} onChange={(e) => handleInputChange('preco', e.target.value)} placeholder="Preço"></InputText>
+                            </div>
+                            <div className="w-full">
+                                <label className="font-bold">Quantidade</label>
+                                <InputText value={formData.quantidade} onChange={(e) => handleInputChange('quantidade', e.target.value)} placeholder="Quantidade"></InputText>
                             </div>
                             <div className="w-full">
                                  <label className="font-bold" htmlFor="material">Material:</label>
 
                                 <select value={formData.material} onChange={(e) => handleInputChange('material', e.target.value)} className="flex border-solid items-start px-2 justify-items-start p-2 text-start border-1 rounded-md w-full outline-0 shadow-sm" name="material" id="material">
-                                <option value="material1">material1</option>
-                                <option value="material2">material2</option>
-                                <option value="material3">material3</option>
-                                <option value="material4">material4</option>
+                                <option value="">Selecione um material</option>
+                                <option value="Couro">Couro</option>
+                                <option value="Tecido">Tecido</option>
+                                <option value="Sintético">Sintético</option>
+                                <option value="Lona">Lona</option>
                                 </select> 
                             </div>
+                        </div>
+                        <div className="flex flex-row gap-2">
                             <div className="w-full">
                                 <label className="font-bold">Cor</label>
-                                <InputText value={formData.cor} onChange={(e) => handleInputChange('cor', e.target.value)} placeholder="Cor"></InputText>
+                                <InputText value={formData.cor_padrao} onChange={(e) => handleInputChange('cor_padrao', e.target.value)} placeholder="Cor"></InputText>
                             </div>
                             <div className="w-full">
                                 <label className="font-bold">Comprimento</label>
@@ -183,7 +262,7 @@ function AdicionarProdutoPage(){
                         
                         {/* Upload area */}
                         <div className="flex items-center justify-center w-full">
-                            <label className="flex flex-col items-center justify-center w-full h-30 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-gray-500 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600">
+                            <label className="flex flex-col items-center justify-center w-full h-30 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600">
                                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
                                     <svg className="w-8 h-8 mb-4 text-gray-800 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
                                         <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
