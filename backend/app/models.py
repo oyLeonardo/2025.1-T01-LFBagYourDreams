@@ -75,7 +75,7 @@ class ProdutoImagem(models.Model):
     )
     # TROCAMOS URLField POR ImageField
     # O 'upload_to' define a subpasta dentro do AWS_LOCATION ('media/')
-    url = models.URLField()
+    url = models.URLField(default='https://tixunpfronrbfeswufuv.supabase.co/storage/v1/object/public/imagens-produtos/media/produtos/0a5dc12e-0203-4c98-bf56-3f0671e14902.jpg?')
     criado_em = models.DateTimeField(auto_now_add=True)
 
     class Meta:

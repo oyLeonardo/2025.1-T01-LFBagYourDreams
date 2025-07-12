@@ -19,7 +19,7 @@ from rest_framework import generics, permissions, filters, status
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
-from rest_framework.response import 
+from rest_framework.response import Response
 
 # Imports de bibliotecas externas
 from botocore.exceptions import ClientError
@@ -46,12 +46,11 @@ def insert_data_view(request):  # pylint: disable=unused-argument
         return JsonResponse(response, safe=False)
 
     return HttpResponse(status=405)  # Método não permitido
-    
 
 class ProductList(generics.ListCreateAPIView):
-    
-    #API view para listar e criar produtos.
-    
+    """
+    API view para listar e criar produtos.
+    """
     queryset = models.Produto.objects.all() # pylint: disable=no-member
     serializer_class = serializers.ProductListSerializer
     #permission_classes = [permissions.IsAuthenticated]
@@ -62,17 +61,17 @@ class ProductList(generics.ListCreateAPIView):
     ordering = ['preco']  # padrão
 
 class ProductDetail(generics.RetrieveUpdateDestroyAPIView):
-    
-    #API view para recuperar, atualizar ou deletar um produto específico.
-    
+    """
+    API view para recuperar, atualizar ou deletar um produto específico.
+    """
     queryset = models.Produto.objects.all() # pylint: disable=no-member
     serializer_class = serializers.ProductDetailSerializer
    # permission_classes = [permissions.IsAuthenticated]
 
 class ImageUploadView(APIView):
-    
-    #Versão de depuração da view de upload para capturar erros silenciosos.
-    
+    """
+    Versão de depuração da view de upload para capturar erros silenciosos.
+    """
     serializer_class = ProdutoImagemSerializer
 
     def post(self, request, *args, **kwargs):
@@ -105,7 +104,6 @@ class ImageUploadView(APIView):
             print(f"Mensagem: {e}")
             print("--------------------------------------------------")
             return Response({'detail': f'Ocorreu um erro inesperado no servidor: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 logger = logging.getLogger(__name__)
 
