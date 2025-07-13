@@ -6,6 +6,8 @@ from faker import Faker
 from app.models import Carrinho, Cor, Pedido, Produto
 from django.contrib.auth.models import User
 from rest_framework.test import APIClient
+import io
+from PIL import Image
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -25,7 +27,13 @@ def faker():
 
 @pytest.fixture
 def common_client():
-    user = User.objects.create_user(username="testuser", password="12345")
+    user = User.objects.create_user(
+        username="testuser",
+        password="12345",
+        is_staff=False,
+        is_superuser=False
+    )
+
     client = APIClient()
     client.force_authenticate(user=user)
     yield client
@@ -44,6 +52,19 @@ def staff_client():
     client = APIClient()
     client.force_authenticate(user=user)
     yield client
+
+
+@pytest.fixture
+def img():
+
+    file = io.BytesIO()
+    image = Image.new("RGB", (100, 100), "white")
+    image.save(file, "JPEG")
+    file.name = "test.jpg"
+    file.seek(0)
+
+    yield file
+
 
 @pytest.fixture
 def products(db):
