@@ -2,27 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useCart } from '../components/CartContext';
+import {type Produto} from '../types/produto'
 
-interface ImagemProduto {
-  id: number;
-  url: string;
-  criado_em: string;
-}
-
-interface Produto {
-  id: number;
-  titulo: string;
-  descricao: string;
-  categoria: string;
-  preco: number;
-  quantidade: number;
-  material: string;
-  cor_padrao: string;
-  altura: number | null;
-  comprimento: number | null;
-  largura: number | null;
-  imagens: ImagemProduto[];
-}
 
 function ProdutoPage() {
   const { id } = useParams();

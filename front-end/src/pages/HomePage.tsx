@@ -3,27 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ShoppingBagIcon, SparklesIcon, HeartIcon, TagIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-
-interface ImagemProduto {
-  id: number;
-  url: string;
-  criado_em: string;
-}
-
-interface Produto {
-  id: number;
-  titulo: string;
-  descricao: string;
-  categoria: string;
-  preco: number;
-  quantidade: number;
-  material: string;
-  cor_padrao: string;
-  altura: number | null;
-  comprimento: number | null;
-  largura: number | null;
-  imagens: ImagemProduto[];
-}
+import {type Produto} from '../types/produto'
 
 function HomePage() {
   const navigate = useNavigate();

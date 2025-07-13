@@ -2,27 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-
-interface ImagemProduto {
-  id: number;
-  url: string;
-  criado_em: string;
-}
-
-interface Produto {
-  id: number;
-  titulo: string;
-  descricao: string;
-  categoria: string;
-  preco: number;
-  quantidade: number;
-  material: string;
-  cor_padrao: string;
-  altura: number | null;
-  comprimento: number | null;
-  largura: number | null;
-  imagens: ImagemProduto[];
-}
+import {type Produto} from '../types/produto'
 
 function CatalogoPage() {
   const { categoria } = useParams();
