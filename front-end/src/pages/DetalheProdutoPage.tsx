@@ -120,7 +120,7 @@ function DetalheProdutoPage() {
     return (
         <>
         {editmodal && (
-            <div className="fixed inset-0 bg-inherit bg-opacity-25 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50">
                 <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-2xl">
                     <div className="text-center">
                         <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
@@ -151,7 +151,7 @@ function DetalheProdutoPage() {
             </div>
         )}
         {deletemodal && (
-            <div className="fixed inset-0 bg-inherit bg-opacity-25 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50">
                 <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-2xl">
                     <div className="text-center">
                         <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">

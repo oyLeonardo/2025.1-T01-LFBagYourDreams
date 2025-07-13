@@ -18,7 +18,7 @@ function Button({name,color,onClick,type="button"} : ButtonProps) {
 
   return (
     <>
-    <button onClick={onClick} type={type} className={`${colors[color]} flex justify-center border-solid border-2  py-1 px-6 font-bold h-10 rounded-sm hover:cursor-pointer hover:text-white outline-0`}>
+    <button onClick={onClick} type={type} className={`${colors[color]} flex justify-center border-solid border-2 items-center py-1 px-6 font-bold h-10 rounded-sm hover:cursor-pointer hover:text-white outline-0`}>
       {name}
     </button>
     </>

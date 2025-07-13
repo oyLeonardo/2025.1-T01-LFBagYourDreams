@@ -10,15 +10,29 @@ import apiClient from '../api'; // Garanta que este import esteja correto
 
 interface Pedido {
   id: number;
+  email_usuario: string;
   status: string;
   valor_total: number;
+  cep: string;
+  bairro: string;
+  estado: string;
+  cidade: string;
+  numero: string;
+  metodo_pagamento: string;
   frete: number;
-  criado_em: string;
 }
 
 const columnHelper = createColumnHelper<Pedido>();
 
 const columns = [
+  columnHelper.accessor('id', {
+    cell: (info) => info.getValue(),
+    header: 'Id',
+  }),
+  columnHelper.accessor('email_usuario', {
+    cell: (info) => info.getValue(),
+    header: 'Email do Usuário',
+  }),
   columnHelper.accessor('status', {
     cell: (info) => info.getValue(),
     header: 'Status',
@@ -26,16 +40,6 @@ const columns = [
   columnHelper.accessor('valor_total', {
     cell: (info) => `R$ ${Number(info.getValue()).toFixed(2)}`,
     header: 'Valor Total',
-  }),
-  columnHelper.accessor('frete', {
-    header: 'Frete',
-    cell: (info) => `R$ ${Number(info.getValue()).toFixed(2)}`,
-  }),
-  columnHelper.accessor('criado_em', {
-    header: 'Data do Pedido',
-    cell: (info) => new Date(info.getValue()).toLocaleDateString('pt-BR', {
-      day: '2-digit', month: '2-digit', year: 'numeric'
-    }),
   }),
 ];
 
@@ -68,7 +72,7 @@ function TabelaPedidos() {
   }, []); // O array vazio [] garante que isso só aconteça uma vez.
 
   const handleRowClick = (pedido: Pedido) => {
-    // navigate(`/admin/pedido/${pedido.id}`);
+    navigate(`/admin/pedido/${pedido.id}`);
     console.log("Pedido clicado:", pedido);
   };
 

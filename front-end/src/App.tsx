@@ -11,6 +11,8 @@ import CheckoutPage from './pages/CheckoutPage';
 import AdminProtectedRoute from './components/AdminProtectedRoute'; 
 import TokenEntryPage from './pages/TokenEntryPage';
 import Carrinho from './components/Carrinho';
+import DetalhePedidoPage from './pages/DetalhePedidoPage';
+
 
 function App() {
   return (
@@ -26,6 +28,7 @@ function App() {
               <Route path="produtos" element={<ProdutosPage />} />
               <Route path="adicionarproduto" element={<AdicionarProdutoPage />} />
               <Route path="produto/:produtoId" element={<DetalheProdutoPage />} />
+              <Route path="pedido/:pedidoId" element={<DetalhePedidoPage />} />
               <Route path="produtos/editar/:produtoId" element={<AdicionarProdutoPage />} />
             </Route>
           </Route>

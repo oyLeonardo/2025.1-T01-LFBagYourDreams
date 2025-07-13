@@ -215,7 +215,6 @@ function AdicionarProdutoPage(){
         setCarregando(true);
         setShowConfirmModal(false);
 
-        // Preparar os dados (sua lógica aqui está perfeita)
         const dadosParaEnvio = {
             titulo: formData.titulo,
             quantidade: parseInt(formData.quantidade) || 1,
@@ -237,7 +236,7 @@ function AdicionarProdutoPage(){
             }
         });
 
-        // Adicionar a imagem apenas se uma nova foi selecionada
+    
         if (formData.imagem) {
             formDataToSend.append('imagem', formData.imagem);
         }
