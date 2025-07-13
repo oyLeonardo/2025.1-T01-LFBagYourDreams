@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingBagIcon, ArrowRightIcon, SparklesIcon, HeartIcon, TagIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { ShoppingBagIcon, SparklesIcon, HeartIcon, TagIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
@@ -432,40 +432,7 @@ function HomePage() {
           </a>
         </div>
         
-        {/* Depoimentos */}
-        <div className="max-w-6xl w-full mb-16">
-          <h2 className="text-3xl font-bold text-center text-[#075336] mb-12">
-            O que nossas clientes dizem
-          </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[1, 2, 3].map((item) => (
-              <div key={item} className="bg-white p-6 rounded-2xl shadow-sm border border-[#e0e8e0]">
-                <div className="flex items-center mb-4">
-                  <div className="bg-gray-200 border-2 border-dashed rounded-xl w-16 h-16" />
-                  <div className="ml-4">
-                    <h4 className="font-bold text-[#075336]">Ana Carolina</h4>
-                    <div className="flex">
-                      {[...Array(5)].map((_, i) => (
-                        <svg 
-                          key={i}
-                          className="w-4 h-4 text-[#8FBC8F] fill-current"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                <p className="text-[#5d7a6d] italic">
-                  "Minha bolsa personalizada superou todas as expectativas! A qualidade do material e o cuidado com os detalhes são impressionantes. Recebi vários elogios!"
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
+      
       </div>
       <Footer />
     </div>
