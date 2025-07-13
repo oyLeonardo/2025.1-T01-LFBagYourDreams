@@ -6,7 +6,7 @@ import {
 } from '@tanstack/react-table';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import apiClient from '../api'; // Garanta que este import esteja correto
+import apiClient from '../api'; 
 
 interface Pedido {
   id: number;
@@ -51,13 +51,12 @@ function TabelaPedidos() {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   
-  // A função é declarada aqui, no corpo do componente
   const fetchData = async () => {
     setCarregando(true);
     setErro(null);
     try {
-      const response = await apiClient.get('/orders/'); // Usa nosso apiClient
-      setPedidos(response.data.results || response.data); // Funciona com ou sem paginação
+      const response = await apiClient.get('/orders/'); 
+      setPedidos(response.data.results || response.data); 
     } catch (error) {
       console.error('Erro ao buscar pedidos:', error);
       setErro('Não foi possível carregar os pedidos. Verifique se você está logado.');
@@ -66,10 +65,9 @@ function TabelaPedidos() {
     }
   };
 
-  // O useEffect chama a função quando a página carrega pela primeira vez
   useEffect(() => {
     fetchData();
-  }, []); // O array vazio [] garante que isso só aconteça uma vez.
+  }, []); 
 
   const handleRowClick = (pedido: Pedido) => {
     navigate(`/admin/pedido/${pedido.id}`);

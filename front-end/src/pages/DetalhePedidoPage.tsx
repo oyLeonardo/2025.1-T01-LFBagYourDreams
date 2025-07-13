@@ -160,8 +160,8 @@ function DetalhePedidoPage() {
                             Editar pedido "{pedido?.id}"
                         </h3>
                         <form>
-                            <h3>Selecione um status:</h3>
                         <select value={formData.status} onChange={(e) => handleInputChange('status', e.target.value)} className="flex border-solid items-start px-2 justify-items-start p-2 mb-3 text-start border-1 rounded-md w-full outline-0 shadow-sm" name="status" id="status">
+                            <option value="" disabled selected>Selecione um status</option>
                             <option value="cancelado">Cancelado</option>
                             <option value="processando">Processando</option>
                             <option value="enviado">Enviado</option>

@@ -82,7 +82,7 @@ function DetalheProdutoPage() {
             // 3. CORREÇÃO: Usando apiClient para deletar com autenticação
             await apiClient.delete(`/product/${produtoId}/`);
             alert('Produto deletado com sucesso!');
-            navigate('/admin/produtos'); // Volta para a lista
+            navigate('/admin/produtos'); 
         } catch (error) {
             console.error('Erro ao deletar produto:', error);
             alert('Erro ao deletar produto. Tente novamente.');

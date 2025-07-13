@@ -34,9 +34,7 @@ function AdicionarProdutoPage(){
         }));
     };
 
-    // Funções de validação com regex
     const handleTituloChange = (value: string) => {
-        // Apenas letras, espaços e acentos (sem números ou caracteres especiais)
         const regex = /^[a-zA-ZÀ-ÿ\s]*$/;
         if (regex.test(value) || value === '') {
             handleInputChange('titulo', value);
@@ -44,7 +42,6 @@ function AdicionarProdutoPage(){
     };
 
     const handlePrecoChange = (value: string) => {
-        // Apenas números e um ponto decimal (formato: 123.45)
         const regex = /^\d*\.?\d*$/;
         if (regex.test(value) || value === '') {
             handleInputChange('preco', value);
@@ -52,7 +49,6 @@ function AdicionarProdutoPage(){
     };
 
     const handleQuantidadeChange = (value: string) => {
-        // Apenas números inteiros maiores que 0
         const regex = /^[1-9]\d*$/;
         if (regex.test(value) || value === '') {
             handleInputChange('quantidade', value);
@@ -60,39 +56,26 @@ function AdicionarProdutoPage(){
     };
 
     const handleDimensaoChange = (field: string, value: string) => {
-        // Apenas números decimais positivos (formato: 123.45)
         const regex = /^\d*\.?\d*$/;
         if (regex.test(value) || value === '') {
             handleInputChange(field, value);
         }
     };
 
-    const handleCorChange = (value: string) => {
-        // Apenas letras, espaços e acentos (para cores como "Marrom Escuro")
-        const regex = /^[a-zA-ZÀ-ÿ\s]*$/;
-        if (regex.test(value) || value === '') {
-            handleInputChange('cor_padrao', value);
-        }
-    };
-
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const [imagemRemovidaManualmente, setImagemRemovidaManualmente] = useState(false);
     
-    // Carregar dados do produto para edição
     useEffect(() => {
         if (isEditMode && produtoId) {
             const carregarProduto = async () => {
                 setCarregando(true);
                 try {
-                    // TROQUE O FETCH POR apiClient.get
                     const response = await apiClient.get(`/product/${produtoId}/`);
                     
                     const produto = response.data;
-                    // ... resto da sua lógica para preencher o formulário
                     setFormData(prevState => ({
-                        ...prevState, // 1. Copia todos os campos antigos do formulário
+                        ...prevState,
                         
-                        // 2. Atualiza com os novos dados que vieram da API
                         titulo: produto.titulo || "",
                         quantidade: produto.quantidade?.toString() || "",
                         descricao: produto.descricao || "",
@@ -107,12 +90,11 @@ function AdicionarProdutoPage(){
                     }));
 
                     if (produto.imagens && produto.imagens.length > 0) {
-                    // Define a URL da primeira imagem para o preview
                     setPreviewImage(produto.imagens[0].url);
                 }
                     
                 } catch (error) {
-                    // ...
+                    console.error('Erro ao carregar produto:', error);
                 } finally {
                     setCarregando(false);
                 }
@@ -132,9 +114,9 @@ function AdicionarProdutoPage(){
                 imagem: file
             }));
             console.log('Nova imagem selecionada:', file);
-            // Limpar a imagem existente quando uma nova for selecionada
+            
             setPreviewImage(null);
-            setImagemRemovidaManualmente(false); // Reset do flag de remoção manual
+            setImagemRemovidaManualmente(false);
             
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -147,13 +129,10 @@ function AdicionarProdutoPage(){
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         
-        // Limpar alertas anteriores
         setAlerta(null);
         
-        // Validação mais robusta com regex
         const erros = [];
         
-        // Validar título (apenas letras, espaços e acentos)
         const tituloRegex = /^[a-zA-ZÀ-ÿ\s]+$/;
         if (!formData.titulo.trim()) {
             erros.push('Título é obrigatório');
@@ -161,7 +140,6 @@ function AdicionarProdutoPage(){
             erros.push('Título deve conter apenas letras e espaços');
         }
         
-        // Validar preço (números decimais positivos)
         const precoRegex = /^\d+(\.\d{1,2})?$/;
         if (!formData.preco) {
             erros.push('Preço é obrigatório');
@@ -169,7 +147,6 @@ function AdicionarProdutoPage(){
             erros.push('Preço deve ser um valor válido maior que zero (ex: 89.90)');
         }
         
-        // Validar quantidade (números inteiros maiores que 0)
         const quantidadeRegex = /^[1-9]\d*$/;
         if (!formData.quantidade) {
             erros.push('Quantidade é obrigatória');
@@ -180,14 +157,13 @@ function AdicionarProdutoPage(){
         if (!formData.categoria) erros.push('Categoria é obrigatória');
         if (!formData.material) erros.push('Material é obrigatório');
         
-        // Para criação, imagem é obrigatória. Para edição, só se não houver imagem existente
+
         if (!isEditMode && !formData.imagem) {
             erros.push('Imagem é obrigatória');
         } else if (isEditMode && !formData.imagem && !previewImage) {
             erros.push('Imagem é obrigatória');
         }
         
-        // Validar dimensões (se preenchidas, devem ser números decimais positivos)
         const dimensaoRegex = /^\d*\.?\d+$/;
         if (formData.comprimento && !dimensaoRegex.test(formData.comprimento)) {
             erros.push('Comprimento deve ser um número válido (ex: 25.5)');
@@ -207,7 +183,6 @@ function AdicionarProdutoPage(){
             return;
         }
         
-        // Mostrar modal de confirmação
         setShowConfirmModal(true);
     };
 
@@ -228,7 +203,6 @@ function AdicionarProdutoPage(){
             largura: formData.largura ? parseFloat(formData.largura) : null,
         };
         
-        // Preparar o FormData (sua lógica aqui também está perfeita)
         const formDataToSend = new FormData();
         Object.entries(dadosParaEnvio).forEach(([key, value]) => {
             if (value !== null && value !== undefined) {
@@ -245,16 +219,14 @@ function AdicionarProdutoPage(){
             formDataToSend.append('imagem_removida', 'true');
         }
         
-        // Definir a URL e o método dinamicamente
         const url = isEditMode 
             ? `/product/${produtoId}/` // URL para atualizar
             : '/products/';               // URL para criar
             
-        const metodo = isEditMode ? 'put' : 'post'; // Método PUT para atualizar, POST para criar
+        const metodo = isEditMode ? 'put' : 'post'; 
 
         try {
             const response = await apiClient[metodo](url, formDataToSend);
-            // ------------------------------------
 
             console.log(`Produto ${isEditMode ? 'atualizado' : 'criado'}:`, response.data);
             setAlerta({
@@ -377,7 +349,7 @@ function AdicionarProdutoPage(){
                                  <label className="font-bold" htmlFor="material">Material:</label>
 
                                 <select value={formData.material} onChange={(e) => handleInputChange('material', e.target.value)} className="flex border-solid items-start px-2 justify-items-start p-2 text-start border-1 rounded-md w-full outline-0 shadow-sm" name="material" id="material">
-                                <option value="">Selecione um material</option>
+                                <option value="" disabled selected>Selecione um material</option>
                                 <option value="Couro">Couro</option>
                                 <option value="Tecido">Tecido</option>
                                 <option value="Sintético">Sintético</option>
@@ -387,12 +359,48 @@ function AdicionarProdutoPage(){
                         </div>
                         <div className="flex flex-row gap-2">
                             <div className="w-full">
-                                <label className="font-bold">Cor</label>
-                                <InputText 
+                                <label className="font-bold" htmlFor="cor">Cor:</label>
+                                <select 
                                     value={formData.cor_padrao} 
-                                    onChange={(e) => handleCorChange(e.target.value)} 
-                                    placeholder="Ex: Marrom Escuro"
-                                />
+                                    onChange={(e) => handleInputChange('cor_padrao', e.target.value)} 
+                                    className="flex border-solid items-start px-2 justify-items-start p-2 text-start border-1 rounded-md w-full outline-0 shadow-sm" 
+                                    name="cor" 
+                                    id="cor"
+                                >
+                                    <option value="" disabled selected>Selecione uma cor</option>
+                                    <option value="vermelho">Vermelho</option>
+                                    <option value="azul">Azul</option>
+                                    <option value="verde">Verde</option>
+                                    <option value="amarelo">Amarelo</option>
+                                    <option value="preto">Preto</option>
+                                    <option value="branco">Branco</option>
+                                    <option value="cinza">Cinza</option>
+                                    <option value="rosa">Rosa</option>
+                                    <option value="roxo">Roxo</option>
+                                    <option value="laranja">Laranja</option>
+                                    <option value="dourado">Dourado</option>
+                                    <option value="prata">Prata</option>
+                                    <option value="verde militar">Verde Militar</option>
+                                    <option value="vinho">Vinho</option>
+                                    <option value="marrom">Marrom</option>
+                                    <option value="bege">Bege</option>
+                                    <option value="turquesa">Turquesa</option>
+                                    <option value="azul marinho">Azul Marinho</option>
+                                    <option value="coral">Coral</option>
+                                    <option value="lilás">Lilás</option>
+                                    <option value="vermelho escuro">Vermelho Escuro</option>
+                                    <option value="verde claro">Verde Claro</option>
+                                    <option value="azul claro">Azul Claro</option>
+                                    <option value="amarelo ouro">Amarelo Ouro</option>
+                                    <option value="grafite">Grafite</option>
+                                    <option value="caramelo">Caramelo</option>
+                                    <option value="champagne">Champagne</option>
+                                    <option value="petróleo">Petróleo</option>
+                                    <option value="salmão">Salmão</option>
+                                    <option value="vinho tinto">Vinho Tinto</option>
+                                    <option value="verde musgo">Verde Musgo</option>
+                                    <option value="azul celeste">Azul Celeste</option>
+                                </select>
                             </div>
                             <div className="w-full">
                                 <label className="font-bold">Comprimento(cm)</label>
@@ -449,7 +457,7 @@ function AdicionarProdutoPage(){
                                                     ...prev,
                                                     imagem: null
                                                 }));
-                                                // Reset do input file
+                                                
                                                 const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
                                                 if (fileInput) {
                                                     fileInput.value = '';
