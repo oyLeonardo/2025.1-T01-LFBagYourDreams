@@ -2,6 +2,7 @@ import InputText from "../components/InputText"
 import Button from "../components/Button"
 import { Link, useNavigate } from "react-router-dom"
 import { useState } from "react"
+import apiClient from "../api";
 
 function AdicionarProdutoPage(){
     const navigate = useNavigate()
@@ -72,10 +73,9 @@ function AdicionarProdutoPage(){
     };
 
     const handleConfirmSave = async () => {
+        setCarregando(true);
+        
         try {
-            setCarregando(true);
-            
-            // Preparar dados para envio (sem imagem)
             const dadosParaEnvio = {
                 titulo: formData.titulo,
                 quantidade: parseInt(formData.quantidade) || 1,
@@ -89,55 +89,38 @@ function AdicionarProdutoPage(){
                 largura: formData.largura ? parseFloat(formData.largura) : null,
             };
 
-            console.log('Dados para envio:', dadosParaEnvio);
-            let response;
+            const formDataToSend = new FormData();
             
+            Object.entries(dadosParaEnvio).forEach(([key, value]) => {
+                if (value !== null && value !== undefined) {
+                    formDataToSend.append(key, value.toString());
+                }
+            });
+
             if (formData.imagem) {
-                const formDataToSend = new FormData();
-                
-                Object.entries(dadosParaEnvio).forEach(([key, value]) => {
-                    if (value !== null && value !== undefined) {
-                        formDataToSend.append(key, value.toString());
-                    }
-                });
-                
                 formDataToSend.append('imagem', formData.imagem);
-                
-                response = await fetch('http://localhost:8000/api/products/', {
-                    method: 'POST',
-                    body: formDataToSend // FormData não precisa de Content-Type
-                });
             } else {
-                alert('Imagem não fornecid.');
-                response = await fetch('http://localhost:8000/api/products/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(dadosParaEnvio)
-                });
+                alert('Imagem é obrigatória.');
+                setCarregando(false);
+                return;
             }
 
-            if (response.ok) {
-                const resultado = await response.json();
-                console.log('Produto criado:', resultado);
-                alert('Produto adicionado com sucesso!');
-                setShowConfirmModal(false);
-                navigate('/admin/produtos');
-            } else {
-                const errorData = await response.text();
-                console.error('Erro na resposta:', errorData);
-                throw new Error(`Erro ${response.status}: ${errorData}`);
-            }
+            // A única chamada que precisamos, usando apiClient
+            const response = await apiClient.post('/products/', formDataToSend);
+
+            console.log('Produto criado:', response.data);
+            alert('Produto adicionado com sucesso!');
+            setShowConfirmModal(false);
+            navigate('/admin/produtos');
+
         } catch (error) {
             console.error('Erro ao adicionar produto:', error);
-            const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+            const errorMessage = error.response?.data?.detail || error.message || 'Erro desconhecido';
             alert(`Erro ao adicionar produto: ${errorMessage}`);
         } finally {
             setCarregando(false);
         }
-    };
-
+    }
     const handleCancelSave = () => {
         setShowConfirmModal(false);
     };

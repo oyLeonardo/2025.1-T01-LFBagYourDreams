@@ -8,6 +8,8 @@ import CatalogoPage from './pages/CatalogoPage';
 import DetalheProdutoPage from './pages/DetalheProdutoPage';
 import ProdutoPageCatalogo from './pages/ProdutoPageCatalogo';
 import CheckoutPage from './pages/CheckoutPage';
+import AdminProtectedRoute from './components/AdminProtectedRoute'; 
+import TokenEntryPage from './pages/TokenEntryPage';
 import Carrinho from './components/Carrinho';
 
 function App() {
@@ -15,14 +17,18 @@ function App() {
     <div className="min-h-screen flex flex-col">
       <div className="flex-grow">
         <Routes>
-          <Route path="/admin" element={<AdminPage />}>
-            <Route index element={<PedidosPage />} />
-            <Route path="pedidos" element={<PedidosPage />} />
-            <Route path="produtos" element={<ProdutosPage />} />
-            <Route path="adicionarproduto" element={<AdicionarProdutoPage />} />
-            <Route path="produto/:produtoId" element={<DetalheProdutoPage />} />
+
+          <Route path="/inserir-token" element={<TokenEntryPage />} />
+          <Route element={<AdminProtectedRoute />}>
+            <Route path="/admin" element={<AdminPage />}>
+              <Route index element={<PedidosPage />} />
+              <Route path="pedidos" element={<PedidosPage />} />
+              <Route path="produtos" element={<ProdutosPage />} />
+              <Route path="adicionarproduto" element={<AdicionarProdutoPage />} />
+              <Route path="produto/:produtoId" element={<DetalheProdutoPage />} />
+            </Route>
           </Route>
-          
+
           <Route path="/" element={<HomePage />} />
           <Route path="/categoria/:categoria" element={<CatalogoPage />} />
           <Route path="/produto/:id" element={<ProdutoPageCatalogo />} />

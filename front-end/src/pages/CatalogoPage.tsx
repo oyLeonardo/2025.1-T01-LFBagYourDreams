@@ -163,7 +163,7 @@ function CatalogoPage() {
                     alt={produto.titulo} 
                     className="absolute top-0 left-0 w-full h-full object-cover"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = 'https://via.placeholder.com/300x300?text=Imagem+não+carregada';
+                    (e.target as HTMLImageElement).src = 'https://placehold.co/300x300?text=Imagem+Indisponível';
                     }}
                   />
                 </div>
