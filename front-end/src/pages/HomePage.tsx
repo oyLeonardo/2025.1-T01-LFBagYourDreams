@@ -1,69 +1,100 @@
-import Navbar from '../components/Navbar';
-import { ShoppingBagIcon, ArrowRightIcon, SparklesIcon, HeartIcon, TagIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ShoppingBagIcon, ArrowRightIcon, SparklesIcon, HeartIcon, TagIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
-// Interface para tipagem dos produtos
-interface Produto {
+interface ImagemProduto {
   id: number;
-  nome: string;
-  descricao: string;
-  preco: number;
-  precoOriginal?: number;
-  imagem: string;
-  coresDisponiveis?: string[];
-  avaliacao?: number;
+  url: string;
+  criado_em: string;
 }
 
-// Dados dos produtos em destaque
-const produtosDestaque: Produto[] = [
-  {
-    id: 1,
-    nome: "Bolsa de Couro Premium",
-    descricao: "Bolsa em couro legítimo com acabamento artesanal",
-    preco: 299.90,
-    precoOriginal: 349.90,
-    imagem: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=300&q=80",
-    coresDisponiveis: ["#8B4513", "#000000", "#964B00"],
-    avaliacao: 4.8
-  },
-  {
-    id: 2,
-    nome: "Bolsa Térmica para Almoço",
-    descricao: "Mantenha sua comida quentinha com estilo",
-    preco: 149.90,
-    imagem: "https://images.unsplash.com/photo-1591561954557-26941169b49e?auto=format&fit=crop&w=300&q=80",
-    coresDisponiveis: ["#FF6B6B", "#4ECDC4", "#556270"],
-    avaliacao: 4.5
-  },
-  {
-    id: 3,
-    nome: "Mochila Executiva",
-    descricao: "Perfeita para o trabalho com compartimento para laptop",
-    preco: 349.90,
-    precoOriginal: 399.90,
-    imagem: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=300&q=80",
-    coresDisponiveis: ["#2C3E50", "#7F8C8D", "#16A085"],
-    avaliacao: 4.9
-  },
-  {
-    id: 4,
-    nome: "Clutch Elegance",
-    descricao: "Perfeita para eventos noturnos e ocasiões especiais",
-    preco: 199.90,
-    imagem: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=300&q=80",
-    coresDisponiveis: ["#DAA520", "#800020", "#000000"],
-    avaliacao: 4.7
-  }
-];
+interface Produto {
+  id: number;
+  titulo: string;
+  descricao: string;
+  categoria: string;
+  preco: number;
+  quantidade: number;
+  material: string;
+  cor_padrao: string;
+  altura: number | null;
+  comprimento: number | null;
+  largura: number | null;
+  imagens: ImagemProduto[];
+}
 
 function HomePage() {
   const navigate = useNavigate();
+  const [produtosDestaque, setProdutosDestaque] = useState<Produto[]>([]);
+  const [carregando, setCarregando] = useState(true);
   const telefoneVendedora = "+5511999999999";
 
-  // Função para ver detalhes do produto
+  useEffect(() => {
+    const fetchProdutosDestaque = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/api/products/');
+        const data = await response.json();
+        setProdutosDestaque(selecionarDestaques(data));
+      } catch (error) {
+        console.error('Erro ao buscar produtos:', error);
+      } finally {
+        setCarregando(false);
+      }
+    };
+
+    fetchProdutosDestaque();
+  }, []);
+
+  const selecionarDestaques = (produtos: Produto[]): Produto[] => {
+    const ultimasUnidades = produtos.filter(p => p.quantidade < 5);
+    const outrosProdutos = produtos.filter(p => p.quantidade >= 5);
+    const embaralhados = [...outrosProdutos].sort(() => Math.random() - 0.5);
+    const combinados = [...ultimasUnidades, ...embaralhados];
+    return combinados.slice(0, 4); 
+  };
+
   const verDetalhesProduto = (produtoId: number) => {
     navigate(`/produto/${produtoId}`);
+  };
+
+  const getCorClass = (corNome: string): string => {
+    const cores: Record<string, string> = {
+      'vermelho': 'bg-red-500',
+      'azul': 'bg-blue-500',
+      'verde': 'bg-green-500',
+      'amarelo': 'bg-yellow-400',
+      'preto': 'bg-black',
+      'branco': 'bg-white border border-gray-300',
+      'cinza': 'bg-gray-400',
+      'rosa': 'bg-pink-400',
+      'roxo': 'bg-purple-500',
+      'laranja': 'bg-orange-500',
+      'dourado': 'bg-amber-400',
+      'prata': 'bg-gray-300',
+      'verde militar': 'bg-green-800',
+      'vinho': 'bg-red-800',
+      'marrom': 'bg-amber-800',
+      'bege': 'bg-amber-100 border border-gray-300',
+      'turquesa': 'bg-cyan-400',
+      'azul marinho': 'bg-blue-800',
+      'coral': 'bg-orange-300',
+      'lilás': 'bg-purple-300',
+      'vermelho escuro': 'bg-red-700',
+      'verde claro': 'bg-green-300',
+      'azul claro': 'bg-blue-300',
+      'amarelo ouro': 'bg-yellow-500',
+      'grafite': 'bg-gray-600',
+      'caramelo': 'bg-amber-600',
+      'champagne': 'bg-amber-50 border border-gray-300',
+      'petróleo': 'bg-teal-700',
+      'salmão': 'bg-orange-200',
+      'vinho tinto': 'bg-red-900',
+      'verde musgo': 'bg-green-700',
+      'azul celeste': 'bg-blue-200',
+    };
+    return cores[corNome.toLowerCase()] || 'bg-gray-200 border border-gray-300';
   };
 
   return (
@@ -221,50 +252,72 @@ function HomePage() {
           </div>
         </div>
         
-        {/* Produtos em Destaque - Design Minimalista Roxo */}
-        <div id="produtos" className="mt-8 mb-16 w-full max-w-6xl">
+        {/* Produtos em Destaque - Atualizado */}
+        <div id="produtos" className="mt-8 mb-16 w-full max-w-6xl px-4">
           <div className="flex justify-between items-center mb-10">
             <h2 className="text-3xl font-bold">
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#8A2BE2] to-[#4B0082]">
-                Bolsas em Destaque
+                Destaques do Catálogo
               </span>
             </h2>
-            <div className="text-[#8A2BE2] font-medium flex items-center">
-              <span>Ver todas</span>
-              <ArrowRightIcon className="w-4 h-4 ml-1" />
-            </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {produtosDestaque.map((produto) => (
-              <div 
-                key={produto.id} 
-                className="bg-gradient-to-br from-[#f9f0ff] to-[#e6e6fa] p-5 rounded-2xl shadow-sm border border-[#e0d0f0] group relative overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
-                onClick={() => verDetalhesProduto(produto.id)}
-              >
-                <div className="h-48 mb-4 flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-b from-[#f0e8ff] to-[#d8cfff]">
-                  <img 
-                    src={produto.imagem} 
-                    alt={produto.nome}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.src = `https://via.placeholder.com/300x300/f9f3ff/6A5ACD?text=${encodeURIComponent(produto.nome.substring(0, 15))}`;
-                    }}
-                  />
+          {carregando ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="bg-white rounded-lg shadow-sm p-4">
+                  <div className="animate-pulse">
+                    <div className="bg-gray-200 h-48 rounded-lg"></div>
+                    <div className="mt-4 space-y-2">
+                      <div className="bg-gray-200 h-4 rounded"></div>
+                      <div className="bg-gray-200 h-4 rounded w-3/4"></div>
+                      <div className="bg-gray-200 h-6 rounded w-1/2 mt-2"></div>
+                    </div>
+                  </div>
                 </div>
-                
-                <div className="text-center">
-                  <h3 className="font-bold text-lg text-[#4B0082] mb-2 group-hover:text-[#8A2BE2] transition-colors">
-                    {produto.nome}
-                  </h3>
-                  <p className="font-semibold text-[#8A2BE2]">
-                    R$ {produto.preco.toFixed(2)}
-                  </p>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {produtosDestaque.map(produto => (
+                <div 
+                  key={produto.id} 
+                  className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col h-full cursor-pointer"
+                  onClick={() => verDetalhesProduto(produto.id)}
+                >
+                  <div className="relative pt-[100%] bg-gray-100">
+                    <img 
+                      src={produto.imagens.length > 0 ? produto.imagens[0].url : 'https://via.placeholder.com/300x300?text=Sem+imagem'} 
+                      alt={produto.titulo} 
+                      className="absolute top-0 left-0 w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://via.placeholder.com/300x300?text=Imagem+não+carregada';
+                      }}
+                    />
+                    {produto.quantidade < 5 && (
+                      <div className="absolute top-2 left-2 bg-[#8A2BE2] text-white text-xs font-bold px-2 py-1 rounded-full z-10 animate-pulse">
+                        Últimas {produto.quantidade} unidades!
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-4 flex-grow flex flex-col">
+                    <h3 className="font-semibold text-gray-800">{produto.titulo}</h3>
+                    <div className="mt-2 flex items-center">
+                      <span 
+                        className={`w-4 h-4 rounded-full inline-block mr-2 border border-gray-300 ${getCorClass(produto.cor_padrao)}`}
+                      ></span>
+                      <span className="text-xs text-gray-500">{produto.cor_padrao}</span>
+                    </div>
+                    <div className="mt-auto pt-3">
+                      <p className="font-bold text-[#8A2BE2] text-lg">
+                        R$ {produto.preco.toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Seção: Experiência de Personalização */}
