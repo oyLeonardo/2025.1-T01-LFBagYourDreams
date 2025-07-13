@@ -80,7 +80,7 @@ class ProductList(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]  # Permite leitura para não autenticados
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['categoria', 'material', 'cor_padrao']
-    search_fields = ['titulo', 'descricao']
+    search_fields = ['titulo', 'descricao', 'material']
     ordering_fields = ['preco', 'quantidade']
     ordering = ['preco']
 
@@ -102,6 +102,18 @@ class OrderList(generics.ListAPIView):
     queryset = models.Pedido.objects.all()
     serializer_class = serializers.OrderSerializer
     permission_classes = [IsAuthenticated]
+
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+
+    filterset_fields = {
+        'created_at': ['date', 'lt', 'gt'],
+        'updated_at': ['date'],
+        'metodo_pagamento': ['exact'],
+        'status': ['exact']
+    }
+
+    ordering_fields = ['valor_total', 'created_at', 'updated_at']
+    ordering = ['valor_total']
 
 
 class OrderDetail(generics.RetrieveUpdateDestroyAPIView):
