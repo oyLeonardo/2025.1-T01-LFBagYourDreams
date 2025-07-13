@@ -1,7 +1,10 @@
+"""Serializers para o app"""
+
 from rest_framework import serializers
 from . import models
 from .models import Carrinho, Cor, Personalizacao, Produto, ProdutoCarrinho, Pedido
 from .utils.supabase_utils import upload_file_object_to_supabase
+import re
 
 class CarrinhoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -28,10 +31,104 @@ class ProdutoCarrinhoSerializer(serializers.ModelSerializer):
         model = ProdutoCarrinho
         fields = '__all__'
 
-class PedidoSerializer(serializers.ModelSerializer):
+class OrderSerializer(serializers.ModelSerializer):
+    """Serializer para o modelo Pedido."""
+
     class Meta:
+        """Metadados do OrderSerializer."""
+
         model = Pedido
-        fields = '__all__'
+        fields = [
+            'id', 'email_usuario', 'codigo_carrinho', 'cep', 'bairro',
+            'estado', 'cidade', 'numero', 'metodo_pagamento', 'frete',
+            'valor_total', 'status'
+        ]
+
+        read_only_fields = ['id']
+
+    def validate_cep(self, value):
+        """O cep tem exatamente 8 dígitos e 1 hífen"""
+        if not re.fullmatch(r'^\d{5}-\d{3}$', value):
+            raise serializers.ValidationError("O CEP deve estar no formato XXXXX-XXX.")
+        return value
+
+    def validate_email_usuario(self, value):
+        """Valida o email do usuário"""
+        if "@" not in value or "." not in value.split("@")[-1]:
+            raise serializers.ValidationError("O email deve ser válido.")
+        return value
+
+    def validate_codigo_carrinho(self, value):
+        """Valida que o código do carrinho não seja nulo"""
+        if value is None:
+            raise serializers.ValidationError("O código do carrinho não pode ser nulo.")
+        return value
+
+    def validate_bairro(self, value):
+        """Valida que o bairro não seja vazio"""
+        if not isinstance(value, str):
+            raise serializers.ValidationError("O bairro precisa ser texto.")
+
+        if not value.strip():
+            raise serializers.ValidationError("O bairro não pode ser vazio.")
+        return value
+
+    def validate_estado(self, value):
+        """Valida que o estado não seja vazio"""
+        if not isinstance(value, str):
+            raise serializers.ValidationError("O estado precisa ser texto.")
+
+        if not value.strip():
+            raise serializers.ValidationError("O estado não pode ser vazio.")
+        return value
+
+    def validate_cidade(self, value):
+        """Valida que a cidade não seja vazia"""
+        if not isinstance(value, str):
+            raise serializers.ValidationError("A cidade precisa ser texto.")
+
+        if not value.strip():
+            raise serializers.ValidationError("A cidade não pode ser vazia.")
+        return value
+
+    def validade_numero(self, value):
+        """Valida que o número não seja vazio"""
+        if not isinstance(value, str):
+            raise serializers.ValidationError("O número precisa ser texto.")
+
+        if not value.strip():
+            raise serializers.ValidationError("O número não pode ser vazio.")
+        return value
+
+    def validate_metodo_pagamento(self, value):
+        """Valida que método de pagamento não seja vazio."""
+        if not isinstance(value, str):
+            raise serializers.ValidationError("O método de pagamento precisa ser texto.")
+
+        if not value.strip():
+            raise serializers.ValidationError("O método de pagamento não pode ser vazio.")
+        return value
+
+    def validate_frete(self, value):
+        """Valida que o frete seja um valor positivo ou zero."""
+
+        if not isinstance(value, float):
+            raise serializers.ValidationError("O frete deve ser um número.")
+
+        if value < 0:
+            raise serializers.ValidationError("O frete não pode ser negativo.")
+        return value
+
+    def validate_valor_total(self, value):
+        """Valida que o valor total seja um valor positivo ou zero."""
+
+        if not isinstance(value, float):
+            raise serializers.ValidationError("O valor total deve ser um número.")
+
+        if value < 0:
+            raise serializers.ValidationError("O valor total não pode ser negativo.")
+        return value
+
 
 """Serializers para o app de produtos."""
 
@@ -112,40 +209,63 @@ class ProductListSerializer(serializers.ModelSerializer):
     def validate_categoria(self, value):
         """Valida que a categoria esteja entre as possíveis do front-end"""
         categorias_validas = ['infantil', 'masculino', 'feminino', 'termicas']
+
         if value not in categorias_validas:
-        # Ajustado para as categorias no front-end
             raise serializers.ValidationError(
                 "A categoria deve ser: feminino, masculino, infantil, termicas")
         return value
 
     def validate_quantidade(self, value):
-        """Valida que a quantidade não seja negativa."""
-        if value < 0: # Ajustado para '< 0' para permitir 0
+        """Valida que a quantidade seja um inteiro positivo."""
+        if not isinstance(value, int):
+            raise serializers.ValidationError("A quantidade deve ser um número inteiro.")
+
+        if value < 0:
             raise serializers.ValidationError("A quantidade não pode ser negativa.")
+
         return value
 
     def validate_preco(self, value):
-        """Valida que o preço seja maior que zero."""
+        """Valida que o preço seja um número maior que 0."""
+        if not isinstance(value, float):
+            raise serializers.ValidationError("O preço deve ser um número.")
+
         if value <= 0:
-            raise serializers.ValidationError("O preço deve ser maior que zero.")
+            raise serializers.ValidationError("O preço deve ser maior que 0.")
+
         return value
 
     def validate_altura(self, value):
-        """Valida que a altura não seja negativa."""
-        if value is None or value <= 0: # Ajustado para '< 0' e considerar None
-            raise serializers.ValidationError("A altura não pode ser negativa.")
+        """Valida que a altura seja um número maior que 0."""
+
+        if not isinstance(value, float):
+            raise serializers.ValidationError("A altura deve ser um número.")
+
+        if value <= 0:
+            raise serializers.ValidationError("A altura deve ser maior que 0.")
+
         return value
 
     def validate_largura(self, value):
-        """Valida que a largura não seja negativa."""
-        if value is None or value <= 0: # Ajustado para '< 0' e considerar None
-            raise serializers.ValidationError("A largura não pode ser negativa.")
+        """Valida que a largura seja um número maior que 0."""
+
+        if not isinstance(value, float):
+            raise serializers.ValidationError("A altura deve ser um número.")
+
+        if value <= 0:
+            raise serializers.ValidationError("A largura deve ser maior que 0.")
+
         return value
 
     def validate_comprimento(self, value):
-        """Valida que o comprimento não seja negativo."""
-        if value is None or value <= 0: # Ajustado para '< 0' e considerar None
-            raise serializers.ValidationError("O comprimento não pode ser negativo.")
+        """Valida que o comprimento seja um número maior que 0."""
+
+        if not isinstance(value, float):
+            raise serializers.ValidationError("O comprimento deve ser um número.")
+
+        if value <= 0:
+            raise serializers.ValidationError("O comprimento deve ser maior que 0.")
+
         return value
 
 
@@ -200,39 +320,63 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
     def validate_categoria(self, value):
         """Valida que a categoria esteja entre as possíveis do front-end"""
+
         categorias_validas = ['infantil', 'masculino', 'feminino', 'termicas']
+
         if value not in categorias_validas:
-        # Ajustado para as categorias no front-end
             raise serializers.ValidationError(
                 "A categoria deve ser: feminino, masculino, infantil, termicas")
         return value
 
     def validate_quantidade(self, value):
-        """Valida que a quantidade não seja negativa."""
+        """Valida que a quantidade seja um inteiro positivo."""
+        if not isinstance(value, int):
+            raise serializers.ValidationError("A quantidade deve ser um número inteiro.")
+
         if value < 0:
             raise serializers.ValidationError("A quantidade não pode ser negativa.")
+
         return value
 
     def validate_preco(self, value):
-        """Valida que o preço seja maior que zero."""
+        """Valida que o preço seja um número maior que 0."""
+        if not isinstance(value, float):
+            raise serializers.ValidationError("O preço deve ser um número.")
+
         if value <= 0:
-            raise serializers.ValidationError("O preço deve ser maior que zero.")
+            raise serializers.ValidationError("O preço deve ser maior que 0.")
+
         return value
 
     def validate_altura(self, value):
-        """Valida que a altura não seja negativa."""
-        if value is not None and value < 0:
-            raise serializers.ValidationError("A altura não pode ser negativa.")
+        """Valida que a altura seja um número maior que 0."""
+
+        if not isinstance(value, float):
+            raise serializers.ValidationError("A altura deve ser um número.")
+
+        if value <= 0:
+            raise serializers.ValidationError("A altura deve ser maior que 0.")
+
         return value
 
     def validate_largura(self, value):
-        """Valida que a largura não seja negativa."""
-        if value is not None and value < 0:
-            raise serializers.ValidationError("A largura não pode ser negativa.")
+        """Valida que a largura seja um número maior que 0."""
+
+        if not isinstance(value, float):
+            raise serializers.ValidationError("A altura deve ser um número.")
+
+        if value <= 0:
+            raise serializers.ValidationError("A largura deve ser maior que 0.")
+
         return value
 
     def validate_comprimento(self, value):
-        """Valida que o comprimento não seja negativo."""
-        if value is not None and value < 0:
-            raise serializers.ValidationError("O comprimento não pode ser negativo.")
+        """Valida que o comprimento seja um número maior que 0."""
+
+        if not isinstance(value, float):
+            raise serializers.ValidationError("O comprimento deve ser um número.")
+
+        if value <= 0:
+            raise serializers.ValidationError("O comprimento deve ser maior que 0.")
+
         return value

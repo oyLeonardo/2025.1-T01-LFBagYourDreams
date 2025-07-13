@@ -68,8 +68,10 @@ class Produto(models.Model):    # pylint: disable=too-few-public-methods
         db_table = 'produto'
         managed = False
 
+
 class ProdutoImagem(models.Model):
-    """classe que guarda a url das imagnes dos produtos"""
+    """Classe que guarda a url das imagnes dos produtos"""
+
     produto = models.ForeignKey(
         Produto,
         on_delete=models.CASCADE,
@@ -99,14 +101,16 @@ class ProdutoCarrinho(models.Model):    # pylint: disable=too-few-public-methods
         db_table = 'produto_carrinho'
         managed = False
 
+
 class Pedido(models.Model):
+    """Representa um pedido realizado por um usuário."""
+
     email_usuario = models.TextField(max_length=255, blank=True, null=True)
 
     codigo_carrinho = models.ForeignKey(
         Carrinho,
         on_delete=models.CASCADE,
         related_name='pedidos',  # nome mais padrão para acesso reverso
-        db_column='codigo_carrinho'  # evita o erro do
     )
 
     cep = models.TextField(max_length=255, blank=True, null=True)
