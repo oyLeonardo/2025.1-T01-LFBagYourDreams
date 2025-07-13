@@ -1,44 +1,59 @@
 """Testes para as funções utilitárias do supabase"""
-from app.utils.supabase_utils import fetch_from_supabase, insert_to_supabase # pylint: disable=import-error
+from unittest import mock
+from app.utils.supabase_utils import fetch_from_supabase, insert_to_supabase
 
 
 def test_fetch_from_supabase(mocker):
     """
     Testa o retorno da função 'test_fetch_from_supabase'.
-    Retorna 'True' se a função retornar um dicionário de dados.
+    Retorna 'True' se a função retornar uma lista de dados.
     """
 
-    # Construindo  o mock de resposta
-    res = mocker.Mock()
-    res.status_code = 200
-    res.json.return_value = {"data": [{"id": 1, "name": "Test"}]}
+    mock_response = mocker.Mock()
+    mock_response.data = [{"id": 1, "name": "Test"}]
 
-    # Mockando requests.get
-    mocker.patch("app.utils.supabase_utils.requests.get", return_value=res)
+    mock_execute = mocker.Mock(return_value=mock_response)
 
-    # Testando o comportamento esperado da função
-    result = fetch_from_supabase("test_endpoint")
+    mock_select = mocker.Mock()
+    mock_select.execute = mock_execute
 
-    assert "data" in result
-    assert isinstance(result, dict)
+    mock_table = mocker.Mock()
+    mock_table.select = mocker.Mock(return_value=mock_select)
+
+    mocker.patch(
+        "app.utils.supabase_utils.supabase.table",
+        return_value = mock_table
+    )
+
+    result = fetch_from_supabase("test_table")
+
+    assert isinstance(result, list)
+    assert result == mock_response.data
 
 
 def test_insert_to_supabase(mocker):
     """
     Testa o retorno da função 'test_insert_to_supabase'.
-    Retorna 'True' se a função retornar um dicionário de dados.
+    Retorna 'True' se a função retornar uma lista de dados.
     """
 
-    # Construindo  o mock de resposta
-    res = mocker.Mock()
-    res.status_code = 201
-    res.json.return_value = {"id": 1, "name": "Test"}
+    mock_response = mocker.Mock()
+    mock_response.data = [{"id": 1, "name": "Test"}]
 
-    # Mockando requests.post
-    mocker.patch("app.utils.supabase_utils.requests.post", return_value=res)
+    mock_execute = mocker.Mock(return_value=mock_response)
 
-    # Testando o comportamento esperado da função
-    result = insert_to_supabase("test_endpoint", {"name": "Test"})
+    mock_insert = mocker.Mock()
+    mock_insert.execute = mock_execute
 
-    assert "id" in result
-    assert isinstance(result, dict)
+    mock_table = mocker.Mock()
+    mock_table.insert = mocker.Mock(return_value=mock_insert)
+
+    mocker.patch(
+        "app.utils.supabase_utils.supabase.table",
+        return_value = mock_table
+    )
+
+    result = insert_to_supabase("test_table", {"id": 1, "name": "Test"})
+
+    assert isinstance(result, list)
+    assert result == mock_response.data
