@@ -106,7 +106,7 @@ class Pedido(models.Model):
         Carrinho,
         on_delete=models.CASCADE,
         related_name='pedidos',  # nome mais padrão para acesso reverso
-        db_column='codigo_carrinho'  # evita o erro do
+        db_column='codigo_carrinho_id'  # evita o erro do
     )
 
     cep = models.TextField(max_length=255, blank=True, null=True)

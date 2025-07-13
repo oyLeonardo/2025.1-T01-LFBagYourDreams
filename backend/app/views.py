@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponse
 from django.db import transaction, DatabaseError
 from rest_framework import generics, filters, status #permissions
-from rest_framework.permissions import IsAuthenticated
+
 from rest_framework.views import APIView, View
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
@@ -29,6 +29,7 @@ from rest_framework.response import Response
 
 # Imports de bibliotecas externas
 from botocore.exceptions import ClientError
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 
 def home_view(request):
     return HttpResponse("Bem-vindo à página inicial do backend!")
@@ -75,7 +76,7 @@ class ProductList(generics.ListCreateAPIView):
     queryset = models.Produto.objects.all() # pylint: disable=no-member
     serializer_class = serializers.ProductListSerializer
     # permission_classes = [IsAuthenticated]
-    # permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]  # Permite leitura para não autenticados
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['categoria', 'material', 'cor_padrao']
     search_fields = ['titulo', 'descricao']
@@ -89,7 +90,7 @@ class ProductDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = models.Produto.objects.all() # pylint: disable=no-member
     serializer_class = serializers.ProductDetailSerializer
     # permission_classes = [IsAuthenticated]
-    # permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]  # Permite leitura para não autenticados
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +98,7 @@ class OrderList(generics.ListAPIView):
 
     queryset = models.Pedido.objects.all()
     serializer_class = serializers.PedidoSerializer
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
 class ImageUploadView(APIView):
     """

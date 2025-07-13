@@ -103,8 +103,13 @@ function AdicionarProdutoPage(){
                         comprimento: produto.comprimento?.toString() || "",
                         altura: produto.altura?.toString() || "",
                         largura: produto.largura?.toString() || "",
-                        // O campo 'imagem' é mantido como estava no estado anterior graças ao ...prevState
+                        
                     }));
+
+                    if (produto.imagens && produto.imagens.length > 0) {
+                    // Define a URL da primeira imagem para o preview
+                    setPreviewImage(produto.imagens[0].url);
+                }
                     
                 } catch (error) {
                     // ...
@@ -235,6 +240,10 @@ function AdicionarProdutoPage(){
         // Adicionar a imagem apenas se uma nova foi selecionada
         if (formData.imagem) {
             formDataToSend.append('imagem', formData.imagem);
+        }
+
+        if (imagemRemovidaManualmente) {
+            formDataToSend.append('imagem_removida', 'true');
         }
         
         // Definir a URL e o método dinamicamente

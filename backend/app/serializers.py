@@ -158,52 +158,40 @@ class ProductListSerializer(serializers.ModelSerializer):
 
 
 class ProductDetailSerializer(serializers.ModelSerializer):
-    """Serializer para detalhes de um produto (com imagens)."""
-    imagens = ProdutoImagemSerializer(many=True, required=False)
+    """
+    Serializer para detalhes e ATUALIZAÇÃO de um produto.
+    
+    """
+   
+    imagens = ProdutoImagemSerializer(many=True, read_only=True)
+    imagem = serializers.ImageField(write_only=True, required=False)
 
-    class Meta: # pylint: disable=too-few-public-methods
-        """Metainformações do ProductDetailSerializer."""
+    class Meta:
         model = models.Produto
         fields = [
-            'id', 'titulo', 'descricao', 'categoria', 'preco',
-            'quantidade', 'material', 'cor_padrao', 'altura',
-            'comprimento', 'largura', 'imagens'
+            'id', 'titulo', 'descricao', 'categoria', 'preco', 'quantidade', 
+            'material', 'cor_padrao', 'altura', 'comprimento', 'largura', 
+            'imagens', 'imagem'
         ]
 
-    def create(self, validated_data):
-        imagens_data = validated_data.pop('imagens', [])
-        produto = models.Produto.objects.create(**validated_data)
-        for imagem in imagens_data:
-            models.ProdutoImagem.objects.create(produto=produto, **imagem)
-        return produto
-
     def update(self, instance, validated_data):
-        imagens_data = validated_data.pop('imagens', None)
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
+        """
+        Este método customizado é chamado para ATUALIZAR um produto (PUT/PATCH).
+        """
 
-        if imagens_data is not None:
-            current_image_ids = [img.id for img in instance.imagens.all()]
-            incoming_image_ids = [img.get('id') for img in imagens_data if img.get('id')
-                                  is not None]
+        imagem_data = validated_data.pop('imagem', None)
+        instance = super().update(instance, validated_data)
 
-            models.ProdutoImagem.objects.filter(
-                produto=instance,
-                id__in=[id for id in current_image_ids if id not in incoming_image_ids]
-            ).delete()
+        if imagem_data:
+            instance.imagens.all().delete()
 
-            for img_data in imagens_data:
-                img_id = img_data.get('id')
-                if img_id is not None:
-                    try:
-                        img = models.ProdutoImagem.objects.get(id=img_id, produto=instance)
-                        img.url = img_data.get('url', img.url)
-                        img.save()
-                    except models.ProdutoImagem.DoesNotExist:
-                        models.ProdutoImagem.objects.create(produto=instance, **img_data)
-                else:
-                    models.ProdutoImagem.objects.create(produto=instance, **img_data)
+            imagem_url = upload_file_object_to_supabase(imagem_data, imagem_data.content_type)
+
+            if imagem_url:
+                models.ProdutoImagem.objects.create(produto=instance, url=imagem_url)
+            else:
+                raise serializers.ValidationError("Falha no upload da nova imagem.")
+        
         return instance
 
     def validate_categoria(self, value):

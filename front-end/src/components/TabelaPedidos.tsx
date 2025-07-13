@@ -6,6 +6,7 @@ import {
 } from '@tanstack/react-table';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import apiClient from '../api'; // Garanta que este import esteja correto
 
 interface Pedido {
   id: number;
@@ -23,15 +24,18 @@ const columns = [
     header: 'Status',
   }),
   columnHelper.accessor('valor_total', {
-    cell: (info) => `R$ ${info.getValue().toFixed(2)}`,
+    cell: (info) => `R$ ${Number(info.getValue()).toFixed(2)}`,
     header: 'Valor Total',
   }),
   columnHelper.accessor('frete', {
     header: 'Frete',
-    cell: (info) => `R$ ${info.getValue().toFixed(2)}`,
+    cell: (info) => `R$ ${Number(info.getValue()).toFixed(2)}`,
   }),
   columnHelper.accessor('criado_em', {
-    header: 'Criado Em',
+    header: 'Data do Pedido',
+    cell: (info) => new Date(info.getValue()).toLocaleDateString('pt-BR', {
+      day: '2-digit', month: '2-digit', year: 'numeric'
+    }),
   }),
 ];
 
@@ -43,37 +47,29 @@ function TabelaPedidos() {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   
-  const API_URL = 'http://localhost:8000/api/orders/';
-    
-    useEffect(() => {
-      fetchData(API_URL);
-    }, []);
-    
-    function fetchData(baseUrl: string) {
-      setCarregando(true);
-      setErro(null);
-      
-      fetch(baseUrl)
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error(`Erro HTTP: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then((data) => {
-          setPedidos(data);
-        })
-        .catch((error) => {
-          console.error('Erro ao buscar pedidos:', error);
-          setErro('Não foi possível carregar os pedidos. Tente novamente mais tarde.');
-        })
-        .finally(() => {
-          setCarregando(false);
-        });
+  // A função é declarada aqui, no corpo do componente
+  const fetchData = async () => {
+    setCarregando(true);
+    setErro(null);
+    try {
+      const response = await apiClient.get('/orders/'); // Usa nosso apiClient
+      setPedidos(response.data.results || response.data); // Funciona com ou sem paginação
+    } catch (error) {
+      console.error('Erro ao buscar pedidos:', error);
+      setErro('Não foi possível carregar os pedidos. Verifique se você está logado.');
+    } finally {
+      setCarregando(false);
     }
+  };
+
+  // O useEffect chama a função quando a página carrega pela primeira vez
+  useEffect(() => {
+    fetchData();
+  }, []); // O array vazio [] garante que isso só aconteça uma vez.
 
   const handleRowClick = (pedido: Pedido) => {
-    navigate(`/pedido/${pedido.id}`);
+    // navigate(`/admin/pedido/${pedido.id}`);
+    console.log("Pedido clicado:", pedido);
   };
 
   const paginatedData = useMemo(() => {
@@ -90,6 +86,7 @@ function TabelaPedidos() {
 
   const totalPages = Math.ceil(pedidos.length / pageSize);
 
+
   if (carregando) {
     return (
       <div className="p-7 bg-[#f3f3f3] rounded-xl shadow-sm max-w-5xl mx-auto mt-10">
@@ -100,21 +97,21 @@ function TabelaPedidos() {
     );
   }
 
-  if (erro) {
-    return (
-      <div className="p-7 bg-[#f3f3f3] rounded-xl shadow-sm max-w-5xl mx-auto mt-10">
-        <div className="flex flex-col justify-center items-center h-64">
-          <div className="text-lg text-red-600 mb-4">{erro}</div>
-          <button 
-            onClick={() => fetchData(API_URL)}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            Tentar novamente
-          </button>
-        </div>
+ if (erro) {
+  return (
+    <div className="p-7 bg-[#f3f3f3] rounded-xl shadow-sm max-w-5xl mx-auto mt-10">
+      <div className="flex flex-col justify-center items-center h-64">
+        <div className="text-lg text-red-600 mb-4">{erro}</div>
+        <button 
+          onClick={fetchData}  
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Tentar novamente
+        </button>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   return (
     <div className="p-7 bg-[#f3f3f3] rounded-xl shadow-sm max-w-5xl mx-auto mt-10">
