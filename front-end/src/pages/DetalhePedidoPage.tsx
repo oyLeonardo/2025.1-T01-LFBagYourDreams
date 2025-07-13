@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Button from "../components/Button";
 import apiClient from '../api';
+import Alertas from '../components/Alertas';
 interface Pedido {
   id: number;
   email_usuario: string;
@@ -14,6 +15,7 @@ interface Pedido {
   numero: string;
   metodo_pagamento: string;
   frete: number;
+  send_mail: string;
 }
 
 function DetalhePedidoPage() {
@@ -22,6 +24,7 @@ function DetalhePedidoPage() {
     const [pedido, setPedido] = useState<Pedido | null>(null);
     const [carregando, setCarregando] = useState(true);
     const [editmodal, setEditModal] = useState(false);
+    const [alerta, setAlerta] = useState<{mensagem: string, tipo: 'info' | 'success' | 'warning' | 'error'} | null>(null);
     const [formData, setFormData] = useState({
         id: "",
         email_usuario: "",
@@ -33,7 +36,8 @@ function DetalhePedidoPage() {
         cidade: "",
         numero: "",
         metodo_pagamento: "",
-        frete: 0
+        frete: 0,
+        send_mail: ""
     });
 
     const handleInputChange = (field: string, value: string) => {
@@ -44,13 +48,60 @@ function DetalhePedidoPage() {
     };
 
     const handleEditCancel = () => {
-    setEditModal(false); // Apenas fecha o modal
+    setEditModal(false); 
     };
 
-    const handleEditConfirm = () => {
-        setEditModal(false);
-        //fazer chamada API para editar o status do pedido
-        navigate(`/admin/pedidos/editar/${pedidoId}`); 
+    const fetchPedido = async () => {
+        setCarregando(true);
+        try {
+            const response = await apiClient.get<Pedido>(`/order/${pedidoId}/`);
+            setPedido(response.data);
+            
+            setFormData({
+                id: response.data.id.toString(),
+                email_usuario: response.data.email_usuario,
+                status: response.data.status,
+                valor_total: response.data.valor_total,
+                cep: response.data.cep,
+                bairro: response.data.bairro,
+                estado: response.data.estado,
+                cidade: response.data.cidade,
+                numero: response.data.numero,
+                metodo_pagamento: response.data.metodo_pagamento,
+                frete: response.data.frete,
+                send_mail: response.data.email_usuario,
+            });
+        } catch (error) {
+            console.error('Erro ao buscar pedido:', error);
+            setPedido(null); 
+        } finally {
+            setCarregando(false);
+        }
+    };
+
+    const handleEditConfirm = async () => {
+        setAlerta(null);
+        setCarregando(true);
+        try {
+            await apiClient.put(`/order/${pedidoId}/`, formData);
+            
+            await fetchPedido();
+            
+            setAlerta({
+                mensagem: 'Pedido atualizado com sucesso!',
+                tipo: 'success',
+            });
+            
+            console.log('Pedido atualizado com sucesso!');
+        } catch (error) {
+            console.error('Erro ao atualizar pedido:', error);
+            setAlerta({
+                mensagem: 'Erro ao atualizar pedido',
+                tipo: 'error',
+            });
+        } finally {
+            setEditModal(false);
+        }
     };
 
     useEffect(() => {
@@ -59,18 +110,6 @@ function DetalhePedidoPage() {
             return;
         }
 
-        const fetchPedido = async () => {
-            setCarregando(true);
-            try {
-                const response = await apiClient.get<Pedido>(`/order/${pedidoId}/`);
-                setPedido(response.data);
-            } catch (error) {
-                console.error('Erro ao buscar pedido:', error);
-                setPedido(null); 
-            } finally {
-                setCarregando(false);
-            }
-        };
         fetchPedido();
     }, [pedidoId]);
     if (carregando) {
@@ -101,11 +140,18 @@ function DetalhePedidoPage() {
 
   return (
     <>
+    {alerta && (
+        <Alertas 
+            mensagem={alerta.mensagem} 
+            tipo={alerta.tipo}
+            onClose={() => setAlerta(null)}
+        />
+    )}
     {editmodal && (
             <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50">
                 <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-2xl">
                     <div className="text-center">
-                        <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                        <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
                             <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                             </svg>
@@ -114,8 +160,8 @@ function DetalhePedidoPage() {
                             Editar pedido "{pedido?.id}"
                         </h3>
                         <form>
+                            <h3>Selecione um status:</h3>
                         <select value={formData.status} onChange={(e) => handleInputChange('status', e.target.value)} className="flex border-solid items-start px-2 justify-items-start p-2 mb-3 text-start border-1 rounded-md w-full outline-0 shadow-sm" name="status" id="status">
-                            <option value="">Selecione um status</option>
                             <option value="cancelado">Cancelado</option>
                             <option value="processando">Processando</option>
                             <option value="enviado">Enviado</option>
