@@ -4,6 +4,9 @@ import pytest
 from django.apps import apps
 from faker import Faker
 from app.models import Carrinho, Cor, Pedido, Produto
+from django.contrib.auth.models import User
+from rest_framework.test import APIClient
+
 
 @pytest.fixture(autouse=True, scope="session")
 def django_test_environment(django_test_environment): # pylint: disable=unused-argument, redefined-outer-name
@@ -19,6 +22,28 @@ def faker():
 
     yield Faker('pt_BR')
 
+
+@pytest.fixture
+def common_client():
+    user = User.objects.create_user(username="testuser", password="12345")
+    client = APIClient()
+    client.force_authenticate(user=user)
+    yield client
+
+
+@pytest.fixture
+def staff_client():
+
+    user = User.objects.create_user(
+        username="staffuser",
+        password="12345",
+        is_staff=True,
+        is_superuser=False
+    )
+
+    client = APIClient()
+    client.force_authenticate(user=user)
+    yield client
 
 @pytest.fixture
 def products(db):
@@ -90,12 +115,12 @@ def carts(db):
 
 
 @pytest.fixture
-def orders(db):
+def orders(db, carts):
 
     yield [
         Pedido.objects.create(
             email_usuario="cliente1@example.com",
-            codigo_carrinho='1',
+            codigo_carrinho=carts[0],
             cep="01310-200",
             bairro="Bela Vista",
             complemento="Apto 101",
@@ -112,7 +137,7 @@ def orders(db):
         ),
         Pedido.objects.create(
             email_usuario="cliente2@example.com",
-            codigo_carrinho='1',
+            codigo_carrinho=carts[1],
             cep="30140-000",
             bairro="Savassi",
             complemento="Sala 12",
@@ -129,7 +154,7 @@ def orders(db):
         ),
         Pedido.objects.create(
             email_usuario="cliente3@example.com",
-            codigo_carrinho='1',
+            codigo_carrinho=carts[2],
             cep="70070-350",
             bairro="Asa Norte",
             complemento="Bloco B",
