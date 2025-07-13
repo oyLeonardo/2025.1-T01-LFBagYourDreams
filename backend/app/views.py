@@ -74,8 +74,8 @@ class ProductList(generics.ListCreateAPIView):
     """
     queryset = models.Produto.objects.all() # pylint: disable=no-member
     serializer_class = serializers.ProductListSerializer
-    permission_classes = [IsAuthenticated]
-    #permission_classes = [permissions.IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
+    # permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['categoria', 'material', 'cor_padrao']
     search_fields = ['titulo', 'descricao']
@@ -88,10 +88,16 @@ class ProductDetail(generics.RetrieveUpdateDestroyAPIView):
     """
     queryset = models.Produto.objects.all() # pylint: disable=no-member
     serializer_class = serializers.ProductDetailSerializer
-    permission_classes = [IsAuthenticated]
-    #permission_classes = [permissions.IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
+    # permission_classes = [permissions.IsAuthenticated]
 
 logger = logging.getLogger(__name__)
+
+class OrderList(generics.ListAPIView):
+
+    queryset = models.Pedido.objects.all()
+    serializer_class = serializers.PedidoSerializer
+    # permission_classes = [IsAuthenticated]
 
 class ImageUploadView(APIView):
     """
@@ -172,7 +178,7 @@ class CreatePedidoView(generics.CreateAPIView):
             external_reference=external_reference,
             # payer_info={'email': 'test_user@example.com'} # Opcional: dados do comprador
         )
-        
+
         if preference and preference.get('status') == 201 and 'init_point' in preference.get('response', {}):
             # Obtém o dicionário de resposta real do MP
             mp_response_data = preference['response']

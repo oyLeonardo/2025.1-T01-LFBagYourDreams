@@ -132,19 +132,19 @@ class ProductListSerializer(serializers.ModelSerializer):
 
     def validate_altura(self, value):
         """Valida que a altura não seja negativa."""
-        if value is not None and value < 0: # Ajustado para '< 0' e considerar None
+        if value is None or value <= 0: # Ajustado para '< 0' e considerar None
             raise serializers.ValidationError("A altura não pode ser negativa.")
         return value
 
     def validate_largura(self, value):
         """Valida que a largura não seja negativa."""
-        if value is not None and value < 0: # Ajustado para '< 0' e considerar None
+        if value is None or value <= 0: # Ajustado para '< 0' e considerar None
             raise serializers.ValidationError("A largura não pode ser negativa.")
         return value
 
     def validate_comprimento(self, value):
         """Valida que o comprimento não seja negativo."""
-        if value is not None and value < 0: # Ajustado para '< 0' e considerar None
+        if value is None or value <= 0: # Ajustado para '< 0' e considerar None
             raise serializers.ValidationError("O comprimento não pode ser negativo.")
         return value
 
@@ -159,7 +159,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'titulo', 'descricao', 'categoria', 'preco',
             'quantidade', 'material', 'cor_padrao', 'altura',
-            'comprimento', 'largura', 'imagens' 
+            'comprimento', 'largura', 'imagens'
         ]
 
     def create(self, validated_data):
