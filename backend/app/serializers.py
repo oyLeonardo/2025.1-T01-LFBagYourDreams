@@ -54,24 +54,35 @@ class ProdutoImagemSerializer(serializers.ModelSerializer):
         return models.ProdutoImagem.objects.create(url=url, **validated_data)
 
 class ProductListSerializer(serializers.ModelSerializer):
-    """Serializer para listar e criar produtos (com imagens)."""
-    imagens = ProdutoImagemSerializer(many=True, required=False)
-    # required=False para não ser obrigatório na criação
+    """
+    Serializer para listar e CRIAR produtos.
+    """
+    imagens = ProdutoImagemSerializer(many=True, read_only=True)
+    imagem = serializers.ImageField(write_only=True, required=True)
 
-    class Meta: # pylint: disable=too-few-public-methods
-        """Metainformações do ProductListSerializer."""
+    class Meta:
         model = models.Produto
         fields = [
-            'id', 'titulo', 'descricao', 'categoria', 'preco',
-            'quantidade', 'material', 'cor_padrao', 'altura',
-            'comprimento', 'largura', 'imagens' # Inclua 'imagens' aqui
+            'id', 'titulo', 'descricao', 'categoria', 'preco', 'quantidade', 
+            'material', 'cor_padrao', 'altura', 'comprimento', 'largura', 
+            'imagens',  
+            'imagem'    
         ]
 
     def create(self, validated_data):
-        imagens_data = validated_data.pop('imagens', [])
+        """
+        3. MUDANÇA: Este método customizado contém a nova lógica de criação.
+        """
+    
+        imagem_data = validated_data.pop('imagem')
         produto = models.Produto.objects.create(**validated_data)
-        for imagem in imagens_data:
-            models.ProdutoImagem.objects.create(produto=produto, **imagem)
+        imagem_url = upload_file_object_to_supabase(imagem_data, imagem_data.content_type)
+        
+        if not imagem_url:
+            produto.delete() 
+            raise serializers.ValidationError("Falha no upload da imagem.")
+        models.ProdutoImagem.objects.create(produto=produto, url=imagem_url)
+            
         return produto
 
     def update(self, instance, validated_data):
@@ -81,12 +92,10 @@ class ProductListSerializer(serializers.ModelSerializer):
         instance.save()
 
         if imagens_data is not None:
-            # Remove imagens que não estão mais na lista (se tiver id)
             current_image_ids = [img.id for img in instance.imagens.all()]
             incoming_image_ids = [img.get('id') for img in imagens_data if img.get('id')
                                   is not None]
 
-            # Deleta as imagens antigas que não foram enviadas na requisição de atualização
             models.ProdutoImagem.objects.filter(
                 produto=instance,
                 id__in=[id for id in current_image_ids if id not in incoming_image_ids]
@@ -95,7 +104,6 @@ class ProductListSerializer(serializers.ModelSerializer):
             for img_data in imagens_data:
                 img_id = img_data.get('id')
                 if img_id is not None:
-                    # Tenta atualizar uma imagem existente
                     try:
                         img = models.ProdutoImagem.objects.get(id=img_id, produto=instance)
                         img.url = img_data.get('url', img.url) # Atualiza URL se fornecida

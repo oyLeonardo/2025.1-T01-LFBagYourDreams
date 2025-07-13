@@ -3,6 +3,7 @@ import Button from "../components/Button"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { useState, useEffect } from "react"
 import Alertas from "../components/Alertas"
+import apiClient from '../api'; 
 
 function AdicionarProdutoPage(){
     const navigate = useNavigate()
@@ -81,50 +82,39 @@ function AdicionarProdutoPage(){
     useEffect(() => {
         if (isEditMode && produtoId) {
             const carregarProduto = async () => {
+                setCarregando(true);
                 try {
-                    setCarregando(true);
-                    const response = await fetch(`http://localhost:8000/api/product/${produtoId}`);
+                    // TROQUE O FETCH POR apiClient.get
+                    const response = await apiClient.get(`/product/${produtoId}/`);
                     
-                    if (response.ok) {
-                        const produto = await response.json();
-                        setFormData({
-                            titulo: produto.titulo || "",
-                            quantidade: produto.quantidade?.toString() || "",
-                            descricao: produto.descricao || "",
-                            categoria: produto.categoria || "",
-                            preco: produto.preco?.toString() || "",
-                            material: produto.material || "",
-                            cor_padrao: produto.cor_padrao || "",
-                            comprimento: produto.comprimento?.toString() || "",
-                            altura: produto.altura?.toString() || "",
-                            largura: produto.largura?.toString() || "",
-                            imagem: null // Não carregamos a imagem existente no form
-                        });
+                    const produto = response.data;
+                    // ... resto da sua lógica para preencher o formulário
+                    setFormData(prevState => ({
+                        ...prevState, // 1. Copia todos os campos antigos do formulário
                         
-                        // Se houver imagem, mostrar preview
-                        if (produto.imagens && produto.imagens.length > 0) {
-                            setPreviewImage(produto.imagens[0].url);
-                        }
-                    } else {
-                        setAlerta({
-                            mensagem: 'Erro ao carregar dados do produto',
-                            tipo: 'error'
-                        });
-                    }
+                        // 2. Atualiza com os novos dados que vieram da API
+                        titulo: produto.titulo || "",
+                        quantidade: produto.quantidade?.toString() || "",
+                        descricao: produto.descricao || "",
+                        categoria: produto.categoria || "",
+                        preco: produto.preco?.toString() || "",
+                        material: produto.material || "",
+                        cor_padrao: produto.cor_padrao || "",
+                        comprimento: produto.comprimento?.toString() || "",
+                        altura: produto.altura?.toString() || "",
+                        largura: produto.largura?.toString() || "",
+                        // O campo 'imagem' é mantido como estava no estado anterior graças ao ...prevState
+                    }));
+                    
                 } catch (error) {
-                    console.error('Erro ao carregar produto:', error);
-                    setAlerta({
-                        mensagem: 'Erro ao carregar dados do produto',
-                        tipo: 'error'
-                    });
+                    // ...
                 } finally {
                     setCarregando(false);
                 }
             };
-            
             carregarProduto();
         }
-    }, [isEditMode, produtoId]);
+        }  , [isEditMode, produtoId]);
     
     const [previewImageFile, setPreviewImageFile] = useState<string | null>(null);
     
@@ -218,131 +208,57 @@ function AdicionarProdutoPage(){
 
     const handleConfirmSave = async () => {
         setCarregando(true);
+        setShowConfirmModal(false);
+
+        // Preparar os dados (sua lógica aqui está perfeita)
+        const dadosParaEnvio = {
+            titulo: formData.titulo,
+            quantidade: parseInt(formData.quantidade) || 1,
+            descricao: formData.descricao,
+            categoria: formData.categoria,
+            preco: parseFloat(formData.preco) || 0,
+            material: formData.material,
+            cor_padrao: formData.cor_padrao,
+            comprimento: formData.comprimento ? parseFloat(formData.comprimento) : null,
+            altura: formData.altura ? parseFloat(formData.altura) : null,
+            largura: formData.largura ? parseFloat(formData.largura) : null,
+        };
         
+        // Preparar o FormData (sua lógica aqui também está perfeita)
+        const formDataToSend = new FormData();
+        Object.entries(dadosParaEnvio).forEach(([key, value]) => {
+            if (value !== null && value !== undefined) {
+                formDataToSend.append(key, value.toString());
+            }
+        });
+
+        // Adicionar a imagem apenas se uma nova foi selecionada
+        if (formData.imagem) {
+            formDataToSend.append('imagem', formData.imagem);
+        }
+        
+        // Definir a URL e o método dinamicamente
+        const url = isEditMode 
+            ? `/product/${produtoId}/` // URL para atualizar
+            : '/products/';               // URL para criar
+            
+        const metodo = isEditMode ? 'put' : 'post'; // Método PUT para atualizar, POST para criar
+
         try {
-            setShowConfirmModal(false);
-            setCarregando(true);
-            
-            // Preparar dados para envio (sem imagem)
-            const dadosParaEnvio = {
-                titulo: formData.titulo,
-                quantidade: parseInt(formData.quantidade) || 1,
-                descricao: formData.descricao,
-                categoria: formData.categoria,
-                preco: parseFloat(formData.preco) || 0,
-                material: formData.material,
-                cor_padrao: formData.cor_padrao,
-                comprimento: formData.comprimento ? parseFloat(formData.comprimento) : null,
-                altura: formData.altura ? parseFloat(formData.altura) : null,
-                largura: formData.largura ? parseFloat(formData.largura) : null,
-            };
+            const response = await apiClient[metodo](url, formDataToSend);
+            // ------------------------------------
 
-            console.log('Dados para envio:', dadosParaEnvio);
-            console.log('Nova imagem selecionada:', !!formData.imagem);
-            console.log('Imagem existente preservada:', !!previewImage && !formData.imagem);
-            console.log('Imagem removida manualmente:', imagemRemovidaManualmente);
-            let response;
+            console.log(`Produto ${isEditMode ? 'atualizado' : 'criado'}:`, response.data);
+            setAlerta({
+                mensagem: `Produto ${isEditMode ? 'atualizado' : 'adicionado'} com sucesso!`,
+                tipo: 'success'
+            });
             
-            // Determinar URL e método baseado no modo
-            const url = isEditMode 
-                ? `http://localhost:8000/api/product/${produtoId}/`
-                : 'http://localhost:8000/api/products/';
-            const method = isEditMode ? 'PUT' : 'POST';
-            
-            console.log('🌐 INFORMAÇÕES DA API:');
-            console.log('  📍 URL:', url);
-            console.log('  🔧 Método:', method);
-            console.log('  📝 Modo:', isEditMode ? 'EDIÇÃO' : 'CRIAÇÃO');
-            console.log('  🆔 Produto ID:', produtoId || 'N/A');
-            
-            // Usar FormData quando:
-            // 1. Nova imagem foi selecionada (para criar ou substituir)
-            // 2. Estamos criando um produto novo (obrigatório ter imagem)
-            // 3. Imagem foi removida manualmente (para indicar remoção)
-            if (formData.imagem || !isEditMode || imagemRemovidaManualmente) {
-                const formDataToSend = new FormData();
-                
-                Object.entries(dadosParaEnvio).forEach(([key, value]) => {
-                    if (value !== null && value !== undefined) {
-                        formDataToSend.append(key, value.toString());
-                    }
-                });
-                
-                // Adicionar nova imagem (substitui a existente)
-                if (formData.imagem) {
-                    formDataToSend.append('imagens', formData.imagem);
-                    console.log('Enviando nova imagem para substituir a existente');
-                    console.log('Nova imagem selecionada:', formData.imagem);
-                    console.log('datatosend:', formDataToSend.get('imagens'));
-                }
-                // Sinalizar remoção de imagem existente
-                else if (imagemRemovidaManualmente) {
-                    formDataToSend.append('remover_imagem', 'true');
-                    console.log('Sinalizando remoção da imagem existente');
-                }
-                
-                console.log(`🚀 FAZENDO REQUISIÇÃO ${method}:`);
-                console.log('  📍 URL:', url);
-                console.log('  📦 Tipo de dados: FormData (com imagem)');
-                console.log('  🖼️ Contém imagem:', !!formData.imagem);
-                
-                // Log detalhado do FormData
-                console.log('  📋 CONTEÚDO DO FORMDATA:');
-                for (let pair of formDataToSend.entries()) {
-                    if (pair[0] === 'imagem' && pair[1] instanceof File) {
-                        console.log(`    ${pair[0]}:`, pair[1], `(${pair[1].name}, ${pair[1].size} bytes)`);
-                    } else {
-                        console.log(`    ${pair[0]}:`, pair[1]);
-                    }
-                }
-                
-                response = await fetch(url, {
-                    method: method,
-                    body: formDataToSend
-                });
-            } else {
-                console.log(`🚀 FAZENDO REQUISIÇÃO ${method}:`);
-                console.log('  📍 URL:', url);
-                console.log('  📦 Tipo de dados: JSON (sem imagem)');
-                console.log('  💾 Mantendo imagem existente');
-                
-                // Modo edição sem nova imagem - mantém a imagem existente
-                response = await fetch(url, {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(dadosParaEnvio)
-                });
-            }
+            setTimeout(() => navigate('/admin/produtos'), 2000);
 
-            if (response.ok) {
-                const resultado = await response.json();
-                console.log(`✅ SUCESSO - Requisição ${method} completada:`);
-                console.log('  📍 URL usada:', url);
-                console.log('  📊 Status:', response.status);
-                console.log('  📝 Resultado:', resultado);
-                console.log(`Produto ${isEditMode ? 'atualizado' : 'criado'}:`, resultado);
-                setAlerta({
-                    mensagem: `Produto ${isEditMode ? 'atualizado' : 'adicionado'} com sucesso!`,
-                    tipo: 'success'
-                });
-                setTimeout(() => {
-                    setShowConfirmModal(false);
-                    navigate('/admin/produtos');
-                }, 2000);
-            } else {
-                const errorData = await response.text();
-                console.error(`❌ ERRO - Requisição ${method} falhou:`);
-                console.error('  📍 URL usada:', url);
-                console.error('  📊 Status:', response.status);
-                console.error('  📄 Resposta:', errorData);
-                console.error('Erro na resposta:', errorData);
-                throw new Error(`Erro ${response.status}: ${errorData}`);
-            }
         } catch (error) {
             console.error(`Erro ao ${isEditMode ? 'atualizar' : 'adicionar'} produto:`, error);
-            const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+            const errorMessage = error.response?.data?.detail || error.message || 'Erro desconhecido';
             setAlerta({
                 mensagem: `Erro ao ${isEditMode ? 'atualizar' : 'adicionar'} produto: ${errorMessage}`,
                 tipo: 'error'
@@ -350,7 +266,8 @@ function AdicionarProdutoPage(){
         } finally {
             setCarregando(false);
         }
-    }
+    };
+
     const handleCancelSave = () => {
         setShowConfirmModal(false);
     };

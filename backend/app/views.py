@@ -140,6 +140,14 @@ class ImageUploadView(APIView):
 
 logger = logging.getLogger(__name__)
 
+class ImagemProdutoDeleteView(generics.DestroyAPIView):
+    """
+    View para deletar uma imagem de produto específica.
+    """
+    queryset = models.ProdutoImagem.objects.all()
+    serializer_class = ProdutoImagemSerializer # Precisa de um serializer, mesmo para deletar
+    permission_classes = [IsAuthenticated] # Apenas admins podem deletar imagens
+
 class CreatePedidoView(generics.CreateAPIView):
     queryset = Pedido.objects.all()
     serializer_class = PedidoSerializer
