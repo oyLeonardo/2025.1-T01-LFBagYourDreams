@@ -1,4 +1,9 @@
-from django.shortcuts import render, redirect
+"""Arquivo de definição das rotas da API"""
+
+import logging
+import json
+from datetime import datetime
+from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
 from django.db import transaction, DatabaseError
 from rest_framework import generics, filters, status #permissions
@@ -14,30 +19,27 @@ from django.conf import settings
 from .utils.supabase_utils import fetch_from_supabase, insert_to_supabase
 from .services.mercadopago_service import MercadoPagoService
 from . import models, serializers
-from .models import Carrinho, Cor, Personalizacao, Produto, ProdutoCarrinho, Pedido
-from .serializers import CarrinhoSerializer, CorSerializer, PersonalizacaoSerializer
-from .serializers import ProdutoSerializer, ProdutoCarrinhoSerializer, PedidoSerializer
+from .models import Pedido
+from .serializers import OrderSerializer
 from .serializers import ProdutoImagemSerializer
-import logging
-import json
-from datetime import datetime
-from rest_framework import generics, permissions, filters, status
-from rest_framework.views import APIView
-from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
-from rest_framework.response import Response
+
+# from rest_framework.parsers import MultiPartParser, FormParser
+# from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
 
 # Imports de bibliotecas externas
 from botocore.exceptions import ClientError
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 
 def home_view(request):
+    """Homepage de teste."""
     return HttpResponse("Bem-vindo à página inicial do backend!")
 
-class MyTokenObtainPairSerializer(TokenObtainPairSerializer): # pylint: disable=abstract-method
+
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     """Serializer personalizado para incluir informações adicionais no token JWT."""
     @classmethod
     def get_token(cls, user):
+        """Retorna o token JWT com claims customizadas para o usuário."""
         token = super().get_token(user)
 
         # Add custom claims
@@ -46,34 +48,33 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer): # pylint: disable=
 
         return token
 
-class MyTokenObtainPairView(TokenObtainPairView): # pylint: disable=abstract-method
+class MyTokenObtainPairView(TokenObtainPairView):
     """View personalizada para o token JWT."""
     serializer_class = MyTokenObtainPairSerializer
 
-def fetch_data_view(request):   # pylint: disable=unused-argument
-
-    #View para buscar dados da Supabase e retornar como JSON.
+def fetch_data_view(request):
+    """Retorna dados do banco de dados."""
 
     data = fetch_from_supabase('')
     return JsonResponse(data, safe=False)
 
 
-def insert_data_view(request):  # pylint: disable=unused-argument
-
-    #View para inserir dados na Supabase via POST.
+def insert_data_view(request):
+    """Rota para inserir dados na Supabase via POST."""
 
     if request.method == 'POST':
         data = request.POST.dict()
         response = insert_to_supabase('', data)
         return JsonResponse(response, safe=False)
 
-    return HttpResponse(status=405)  # Método não permitido
+    return HttpResponse(status=405)
+
 
 class ProductList(generics.ListCreateAPIView):
     """
     API view para listar e criar produtos.
     """
-    queryset = models.Produto.objects.all() # pylint: disable=no-member
+    queryset = models.Produto.objects.all()
     serializer_class = serializers.ProductListSerializer
     # permission_classes = [IsAuthenticated]
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]  # Permite leitura para não autenticados
@@ -81,13 +82,14 @@ class ProductList(generics.ListCreateAPIView):
     filterset_fields = ['categoria', 'material', 'cor_padrao']
     search_fields = ['titulo', 'descricao']
     ordering_fields = ['preco', 'quantidade']
-    ordering = ['preco']  # padrão
+    ordering = ['preco']
+
 
 class ProductDetail(generics.RetrieveUpdateDestroyAPIView):
     """
     API view para recuperar, atualizar ou deletar um produto específico.
     """
-    queryset = models.Produto.objects.all() # pylint: disable=no-member
+    queryset = models.Produto.objects.all()
     serializer_class = serializers.ProductDetailSerializer
     # permission_classes = [IsAuthenticated]
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]  # Permite leitura para não autenticados
@@ -95,15 +97,47 @@ class ProductDetail(generics.RetrieveUpdateDestroyAPIView):
 logger = logging.getLogger(__name__)
 
 class OrderList(generics.ListAPIView):
+    """Classe que retorna uma lista de pedidos através do GET."""
 
     queryset = models.Pedido.objects.all()
-    serializer_class = serializers.PedidoSerializer
+    serializer_class = serializers.OrderSerializer
     permission_classes = [IsAuthenticated]
+
+
+class OrderDetail(generics.RetrieveUpdateDestroyAPIView):
+    """Classe que permite o GET/POST/DELETE de pedidos individualmente."""
+
+    queryset = models.Pedido.objects.all()
+    serializer_class = serializers.OrderSerializer
+    # permission_classes = [IsAuthenticated])
+
+    def update(self, request, *args, **kwargs):
+        """Atualiza o status de um pedido e envia um e-mail informando o usuário."""
+
+        instance = self.get_object()
+        old_status = instance.status
+
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        new_status = serializer.instance.status
+        if old_status != new_status:
+            email = serializer.instance.email_usuario
+            subject = f"Atualização do Pedido {instance.id}"
+            message = f"Seu pedido foi atualizado para o status: {new_status}."
+
+            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
+
+
+        return Response(serializer.data)
+
 
 class ImageUploadView(APIView):
     """
     View para upload de imagens de produtos.
     """
+
     serializer_class = ProdutoImagemSerializer
 
     def post(self, request):
@@ -130,14 +164,22 @@ class ImageUploadView(APIView):
             print("--------------------------------------------------")
             print(">>> ERRO BOTOCORE (S3/SUPABASE) DETECTADO! <<<")
 
-        except Exception as e:
+            return Response(
+                {'detail': f'Ocorreu um erro inesperado no servidor: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        except Exception as e: # broad-exception-caught
             # Pega qualquer outro erro inesperado que possa ter acontecido.
             print("--------------------------------------------------")
             print(">>> ERRO GENÉRICO DETECTADO! <<<")
             print(f"Tipo do Erro: {type(e)}")
             print(f"Mensagem: {e}")
             print("--------------------------------------------------")
-            return Response({'detail': f'Ocorreu um erro inesperado no servidor: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {'detail': f'Ocorreu um erro inesperado no servidor: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 logger = logging.getLogger(__name__)
 
@@ -150,8 +192,10 @@ class ImagemProdutoDeleteView(generics.DestroyAPIView):
     permission_classes = [IsAuthenticated] # Apenas admins podem deletar imagens
 
 class CreatePedidoView(generics.CreateAPIView):
+    """Classe que permite a criação de pedidos (POST)."""
+
     queryset = Pedido.objects.all()
-    serializer_class = PedidoSerializer
+    serializer_class = OrderSerializer
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -167,7 +211,7 @@ class CreatePedidoView(generics.CreateAPIView):
 
         # Crie uma referência externa única para o seu pedido
         external_reference = f"Pedido_{datetime.now().strftime('%Y%m%d%H%M%S%f')}"
-        serializer.validated_data['external_reference'] = external_reference # Salva no modelo Pedido
+        serializer.validated_data['external_reference'] = external_reference
 
         # Salve o pedido no banco de dados primeiro com status pendente
         pedido_obj = serializer.save(status='pending')
@@ -188,20 +232,33 @@ class CreatePedidoView(generics.CreateAPIView):
             # payer_info={'email': 'test_user@example.com'} # Opcional: dados do comprador
         )
 
-        if preference and preference.get('status') == 201 and 'init_point' in preference.get('response', {}):
+        if preference and preference.get('status') == 201 \
+            and 'init_point' in preference.get('response', {}):
+
             # Obtém o dicionário de resposta real do MP
             mp_response_data = preference['response']
 
             pedido_obj.mercadopago_preference_id = mp_response_data.get('id')
             pedido_obj.save()
-            return Response({'init_point': mp_response_data['init_point']}, status=status.HTTP_201_CREATED)
+
+            return Response(
+                {'init_point': mp_response_data['init_point']},
+                status=status.HTTP_201_CREATED
+            )
+
         else:
             # Sua mensagem de log atual já é boa para depuração
-            logger.error(f"Falha ao criar preferência ou 'init_point' ausente. Resposta MP: {preference}")
+            logger.error(
+                f"Falha ao criar preferência ou 'init_point' ausente. Resposta MP: {preference}"
+            )
+
             pedido_obj.status = 'failed_mp_creation'
             pedido_obj.save()
-            return Response({"detail": "Falha ao criar preferência de pagamento no Mercado Pago ou 'init_point' ausente."},
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            return Response(
+                {"detail": "Link de pagamento ausente ou erro na preferência."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class PaymentSuccessView(View):
     def get(self, request):
@@ -254,12 +311,27 @@ def mercadopago_webhook(request):
                             Pedido.status = mp_status # Atualiza o status do seu pedido
                             Pedido.save()
                             logger.info(f"Pedido {Pedido.id} atualizado para status: {mp_status}")
-                            return JsonResponse({"status": "success"}, status=200)
+
+                            return JsonResponse(
+                                {"status": "success"},
+                                status=200
+                            )
+
                         except Pedido.DoesNotExist:
-                            logger.warning(f"Webhook para external_reference {external_reference} não encontrado.")
-                            return JsonResponse({"status": "error", "message": "Pedido not found"}, status=404)
+                            logger.warning(
+                                f"Webhook para external_reference \
+                                {external_reference} não encontrado."
+                            )
+
+                            return JsonResponse(
+                                {"status": "error", "message": "Pedido not found"},
+                                status=404
+                            )
                 else:
-                    return JsonResponse({"status": "error", "message": "Failed to fetch payment details"}, status=400)
+                    return JsonResponse(
+                        {"status": "error", "message": "Failed to fetch payment details"},
+                        status=400
+                    )
             else:
                 logger.info(f"Webhook de tópico ignorado: {topic}")
                 return JsonResponse({"status": "ignored"}, status=200)

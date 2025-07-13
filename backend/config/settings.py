@@ -64,6 +64,20 @@ CORS_ALLOWED_ORIGINS = [
     # Adicione aqui o URL do seu frontend em produção (ex: "https://your-frontend-domain.com")
 ]
 
+# Email settings
+EMAIL_HOST_USER = env('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
+EMAIL_USE_TLS = env('EMAIL_USE_TLS')
+EMAIL_PORT = env("EMAIL_PORT")
+EMAIL_HOST = env("EMAIL_HOST")
+
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+if DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',

@@ -19,7 +19,6 @@ def fetch_from_supabase(table_name: str):
         return response.data
     except Exception as e:
         print(f"Erro ao buscar dados da tabela {table_name}: {e}")
-        return None
 
 # === Função para inserir dados em uma tabela ===
 def insert_to_supabase(table_name: str, data: dict):
@@ -28,7 +27,6 @@ def insert_to_supabase(table_name: str, data: dict):
         return response.data
     except Exception as e:
         print(f"Erro ao inserir dados na tabela {table_name}: {e}")
-        return None
 
 # === Função NOVA para upload via objeto de arquivo (Django request.FILES['imagem']) ===
 def upload_file_object_to_supabase(file_obj, content_type: str) -> str | None:
@@ -77,4 +75,5 @@ def get_public_url_from_supabase(file_name: str) -> str | None:
     except Exception as e:
         print(f"Erro ao obter URL pública: {e}")
         return None
+
 

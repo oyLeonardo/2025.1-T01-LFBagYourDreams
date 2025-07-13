@@ -13,5 +13,6 @@ urlpatterns = [
     path('pagamento/pendente/', views.PendingPaymentView.as_view(), name='pagamento_pendente'),
     path('pagamento/falha/', views.PaymentFailureView.as_view(), name='pagamento_falha'),
     path('pagamento/webhook/', views.mercadopago_webhook, name='mercadopago_webhook'),
-    path('orders/', views.OrderList.as_view(), name='lista_pedidos')
+    path('orders/', views.OrderList.as_view(), name='lista_pedidos'),
+    path('order/<int:pk>/', views.OrderDetail.as_view()),
 ]
