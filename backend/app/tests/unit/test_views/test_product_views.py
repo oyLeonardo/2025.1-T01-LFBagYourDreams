@@ -2,11 +2,10 @@ import pytest
 from django.urls import reverse
 from app.serializers import ProductDetailSerializer
 from app.models import Produto
-from rest_framework.test import APIClient
-from django.contrib.auth.models import User
+
 
 @pytest.mark.django_db
-def test_products_list_get_non_authenticated_user(client, products):
+def test_products_list_get_non_authenticated_client(client, products):
     """Testa a rota que entrega a lista de produtos."""
 
     url = reverse("lista_produtos")
@@ -24,7 +23,7 @@ def test_products_list_get_non_authenticated_user(client, products):
 
 
 @pytest.mark.django_db
-def test_product_detail_get_with_non_authenticated_user(client, products):
+def test_product_detail_get_with_non_authenticated_client(client, products):
     """Testa a rota que entrega um único produto."""
 
     product = products[0]
@@ -71,8 +70,7 @@ def test_product_detail_update_with_common_client(common_client, products):
     response = common_client.patch(url, data=data_update, format='json')
     product.refresh_from_db()
 
-    assert response.status_code == 200
-    assert product.titulo == data_update['titulo']
+    assert response.status_code == 401
 
 
 @pytest.mark.django_db
@@ -115,10 +113,7 @@ def test_product_detail_delete_with_common_client(common_client, products):
 
     response = common_client.delete(url)
 
-    assert response.status_code == 204
-
-    with pytest.raises(Produto.DoesNotExist):
-        Produto.objects.get(id=product.id)
+    assert response.status_code == 401
 
 
 @pytest.mark.django_db

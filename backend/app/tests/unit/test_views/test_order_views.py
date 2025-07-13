@@ -68,11 +68,7 @@ def test_order_detail_get_with_common_client(common_client, orders):
     url = reverse("detalhes_pedido", args=[order.id])
     response = common_client.get(url)
 
-    serializer = OrderSerializer(order)
-    expected = serializer.data
-
-    assert response.status_code == 200
-    assert response.json() == expected
+    assert response.status_code == 401
 
 
 @pytest.mark.django_db
@@ -120,10 +116,8 @@ def test_order_detail_update_with_common_client(common_client, orders):
     }
 
     response = common_client.patch(url, data=data_update, format='json')
-    order.refresh_from_db()
 
-    assert response.status_code == 200
-    assert order.cep == data_update["cep"]
+    assert response.status_code == 401
 
 
 @pytest.mark.django_db
@@ -146,7 +140,7 @@ def test_order_detail_update_with_staff_client(staff_client, orders):
 
 
 @pytest.mark.django_db
-def test_product_detail_delete_with_non_authenticated_client(client, orders):
+def test_order_detail_delete_with_non_authenticated_client(client, orders):
     """Testa a rota para remover um item de pedido."""
 
     order = orders[0]
@@ -158,7 +152,7 @@ def test_product_detail_delete_with_non_authenticated_client(client, orders):
 
 
 @pytest.mark.django_db
-def test_product_detail_delete_with_common_client(common_client, orders):
+def test_order_detail_delete_with_common_client(common_client, orders):
     """Testa a rota para remover um item de pedido."""
 
     order = orders[0]
@@ -166,14 +160,11 @@ def test_product_detail_delete_with_common_client(common_client, orders):
 
     response = common_client.delete(url)
 
-    assert response.status_code == 204
-
-    with pytest.raises(Pedido.DoesNotExist):
-        Pedido.objects.get(id=order.id)
+    assert response.status_code == 401
 
 
 @pytest.mark.django_db
-def test_product_detail_delete_with_staff_client(staff_client, orders):
+def test_order_detail_delete_with_staff_client(staff_client, orders):
     """Testa a rota para remover um item de pedido."""
 
     order = orders[0]
