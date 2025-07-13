@@ -54,14 +54,21 @@ class OrderSerializer(serializers.ModelSerializer):
 
     def validate_email_usuario(self, value):
         """Valida o email do usuário"""
-        if "@" not in value or "." not in value.split("@")[-1]:
+        if "@" not in value:
             raise serializers.ValidationError("O email deve ser válido.")
+
+        if "." not in value.split("@")[-1]:
+            raise serializers.ValidationError("O email deve ser válido.")
+
+        if " " in value:
+            raise serializers.ValidationError("O email deve ser válido.")
+
         return value
 
     def validate_codigo_carrinho(self, value):
-        """Valida que o código do carrinho não seja nulo"""
-        if value is None:
-            raise serializers.ValidationError("O código do carrinho não pode ser nulo.")
+        """Valida que o código do carrinho deve existir no banco."""
+        if not Carrinho.objects.filter(id=value).exists():
+            raise serializers.ValidationError("O código do carrinho deve existir no banco.")
         return value
 
     def validate_bairro(self, value):
@@ -112,7 +119,7 @@ class OrderSerializer(serializers.ModelSerializer):
     def validate_frete(self, value):
         """Valida que o frete seja um valor positivo ou zero."""
 
-        if not isinstance(value, float):
+        if not isinstance(value, (int, float)):
             raise serializers.ValidationError("O frete deve ser um número.")
 
         if value < 0:
@@ -120,12 +127,12 @@ class OrderSerializer(serializers.ModelSerializer):
         return value
 
     def validate_valor_total(self, value):
-        """Valida que o valor total seja um valor positivo ou zero."""
+        """Valida que o valor total seja um valor positivo."""
 
-        if not isinstance(value, float):
+        if not isinstance(value, (int, float)):
             raise serializers.ValidationError("O valor total deve ser um número.")
 
-        if value < 0:
+        if value <= 0:
             raise serializers.ValidationError("O valor total não pode ser negativo.")
         return value
 
@@ -160,26 +167,26 @@ class ProductListSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Produto
         fields = [
-            'id', 'titulo', 'descricao', 'categoria', 'preco', 'quantidade', 
-            'material', 'cor_padrao', 'altura', 'comprimento', 'largura', 
-            'imagens',  
-            'imagem'    
+            'id', 'titulo', 'descricao', 'categoria', 'preco', 'quantidade',
+            'material', 'cor_padrao', 'altura', 'comprimento', 'largura',
+            'imagens',
+            'imagem'
         ]
 
     def create(self, validated_data):
         """
         3. MUDANÇA: Este método customizado contém a nova lógica de criação.
         """
-    
+
         imagem_data = validated_data.pop('imagem')
         produto = models.Produto.objects.create(**validated_data)
         imagem_url = upload_file_object_to_supabase(imagem_data, imagem_data.content_type)
-        
+
         if not imagem_url:
-            produto.delete() 
+            produto.delete()
             raise serializers.ValidationError("Falha no upload da imagem.")
         models.ProdutoImagem.objects.create(produto=produto, url=imagem_url)
-            
+
         return produto
 
     def update(self, instance, validated_data):
@@ -235,7 +242,7 @@ class ProductListSerializer(serializers.ModelSerializer):
 
     def validate_preco(self, value):
         """Valida que o preço seja um número maior que 0."""
-        if not isinstance(value, float):
+        if not isinstance(value, (int, float)):
             raise serializers.ValidationError("O preço deve ser um número.")
 
         if value <= 0:
@@ -246,7 +253,7 @@ class ProductListSerializer(serializers.ModelSerializer):
     def validate_altura(self, value):
         """Valida que a altura seja um número maior que 0."""
 
-        if not isinstance(value, float):
+        if not isinstance(value, (int, float)):
             raise serializers.ValidationError("A altura deve ser um número.")
 
         if value <= 0:
@@ -257,7 +264,7 @@ class ProductListSerializer(serializers.ModelSerializer):
     def validate_largura(self, value):
         """Valida que a largura seja um número maior que 0."""
 
-        if not isinstance(value, float):
+        if not isinstance(value, (int, float)):
             raise serializers.ValidationError("A altura deve ser um número.")
 
         if value <= 0:
@@ -268,7 +275,7 @@ class ProductListSerializer(serializers.ModelSerializer):
     def validate_comprimento(self, value):
         """Valida que o comprimento seja um número maior que 0."""
 
-        if not isinstance(value, float):
+        if not isinstance(value, (int, float)):
             raise serializers.ValidationError("O comprimento deve ser um número.")
 
         if value <= 0:
@@ -280,17 +287,17 @@ class ProductListSerializer(serializers.ModelSerializer):
 class ProductDetailSerializer(serializers.ModelSerializer):
     """
     Serializer para detalhes e ATUALIZAÇÃO de um produto.
-    
+
     """
-   
+
     imagens = ProdutoImagemSerializer(many=True, read_only=True)
     imagem = serializers.ImageField(write_only=True, required=False)
 
     class Meta:
         model = models.Produto
         fields = [
-            'id', 'titulo', 'descricao', 'categoria', 'preco', 'quantidade', 
-            'material', 'cor_padrao', 'altura', 'comprimento', 'largura', 
+            'id', 'titulo', 'descricao', 'categoria', 'preco', 'quantidade',
+            'material', 'cor_padrao', 'altura', 'comprimento', 'largura',
             'imagens', 'imagem'
         ]
 
@@ -311,7 +318,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
                 models.ProdutoImagem.objects.create(produto=instance, url=imagem_url)
             else:
                 raise serializers.ValidationError("Falha no upload da nova imagem.")
-        
+
         return instance
 
     def validate_categoria(self, value):
@@ -336,7 +343,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
     def validate_preco(self, value):
         """Valida que o preço seja um número maior que 0."""
-        if not isinstance(value, float):
+        if not isinstance(value, (int, float)):
             raise serializers.ValidationError("O preço deve ser um número.")
 
         if value <= 0:
@@ -347,7 +354,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     def validate_altura(self, value):
         """Valida que a altura seja um número maior que 0."""
 
-        if not isinstance(value, float):
+        if not isinstance(value, (int, float)):
             raise serializers.ValidationError("A altura deve ser um número.")
 
         if value <= 0:
@@ -358,7 +365,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     def validate_largura(self, value):
         """Valida que a largura seja um número maior que 0."""
 
-        if not isinstance(value, float):
+        if not isinstance(value, (int, float)):
             raise serializers.ValidationError("A altura deve ser um número.")
 
         if value <= 0:
@@ -369,7 +376,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     def validate_comprimento(self, value):
         """Valida que o comprimento seja um número maior que 0."""
 
-        if not isinstance(value, float):
+        if not isinstance(value, (int, float)):
             raise serializers.ValidationError("O comprimento deve ser um número.")
 
         if value <= 0:
