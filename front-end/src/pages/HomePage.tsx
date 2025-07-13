@@ -4,6 +4,7 @@ import { ShoppingBagIcon, SparklesIcon, HeartIcon, TagIcon, ArrowPathIcon } from
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import {type Produto} from '../types/produto'
+import ProdutoCard from '../components/ProdutoCard';
 
 function HomePage() {
   const navigate = useNavigate();
@@ -37,44 +38,6 @@ function HomePage() {
 
   const verDetalhesProduto = (produtoId: number) => {
     navigate(`/produto/${produtoId}`);
-  };
-
-  const getCorClass = (corNome: string): string => {
-    const cores: Record<string, string> = {
-      'vermelho': 'bg-red-500',
-      'azul': 'bg-blue-500',
-      'verde': 'bg-green-500',
-      'amarelo': 'bg-yellow-400',
-      'preto': 'bg-black',
-      'branco': 'bg-white border border-gray-300',
-      'cinza': 'bg-gray-400',
-      'rosa': 'bg-pink-400',
-      'roxo': 'bg-purple-500',
-      'laranja': 'bg-orange-500',
-      'dourado': 'bg-amber-400',
-      'prata': 'bg-gray-300',
-      'verde militar': 'bg-green-800',
-      'vinho': 'bg-red-800',
-      'marrom': 'bg-amber-800',
-      'bege': 'bg-amber-100 border border-gray-300',
-      'turquesa': 'bg-cyan-400',
-      'azul marinho': 'bg-blue-800',
-      'coral': 'bg-orange-300',
-      'lilás': 'bg-purple-300',
-      'vermelho escuro': 'bg-red-700',
-      'verde claro': 'bg-green-300',
-      'azul claro': 'bg-blue-300',
-      'amarelo ouro': 'bg-yellow-500',
-      'grafite': 'bg-gray-600',
-      'caramelo': 'bg-amber-600',
-      'champagne': 'bg-amber-50 border border-gray-300',
-      'petróleo': 'bg-teal-700',
-      'salmão': 'bg-orange-200',
-      'vinho tinto': 'bg-red-900',
-      'verde musgo': 'bg-green-700',
-      'azul celeste': 'bg-blue-200',
-    };
-    return cores[corNome.toLowerCase()] || 'bg-gray-200 border border-gray-300';
   };
 
   return (
@@ -236,7 +199,7 @@ function HomePage() {
         <div id="produtos" className="mt-8 mb-16 w-full max-w-6xl px-4">
           <div className="flex justify-between items-center mb-10">
             <h2 className="text-3xl font-bold">
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#8A2BE2] to-[#4B0082]">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-green-800 to-[#1E3F1E]">
                 Destaques do Catálogo
               </span>
             </h2>
@@ -260,41 +223,14 @@ function HomePage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {produtosDestaque.map(produto => (
-                <div 
-                  key={produto.id} 
-                  className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col h-full cursor-pointer"
+                <ProdutoCard
+                  key={produto.id}
+                  produto={produto}
+                  mostrarDescricao={false}
+                  mostrarMaterial={false}
+                  mostrarEstoque={true}
                   onClick={() => verDetalhesProduto(produto.id)}
-                >
-                  <div className="relative pt-[100%] bg-gray-100">
-                    <img 
-                      src={produto.imagens.length > 0 ? produto.imagens[0].url : 'https://via.placeholder.com/300x300?text=Sem+imagem'} 
-                      alt={produto.titulo} 
-                      className="absolute top-0 left-0 w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = 'https://via.placeholder.com/300x300?text=Imagem+não+carregada';
-                      }}
-                    />
-                    {produto.quantidade < 5 && (
-                      <div className="absolute top-2 left-2 bg-[#8A2BE2] text-white text-xs font-bold px-2 py-1 rounded-full z-10 animate-pulse">
-                        Últimas {produto.quantidade} unidades!
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-4 flex-grow flex flex-col">
-                    <h3 className="font-semibold text-gray-800">{produto.titulo}</h3>
-                    <div className="mt-2 flex items-center">
-                      <span 
-                        className={`w-4 h-4 rounded-full inline-block mr-2 border border-gray-300 ${getCorClass(produto.cor_padrao)}`}
-                      ></span>
-                      <span className="text-xs text-gray-500">{produto.cor_padrao}</span>
-                    </div>
-                    <div className="mt-auto pt-3">
-                      <p className="font-bold text-[#8A2BE2] text-lg">
-                        R$ {produto.preco.toFixed(2)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                />
               ))}
             </div>
           )}
