@@ -29,15 +29,26 @@ function DetalheProdutoPage() {
     const [produto, setProduto] = useState<Produto | null>(null);
     const [carregando, setCarregando] = useState(true);
     const [editmodal, setEditModal] = useState(false);
+    const [deletemodal,setDeleteModal] = useState(false);
     const [erro, setErro] = useState<string | null>(null);
 
-    const handleCancelExit = () => {
+    const handleEditCancelExit = () => {
         setEditModal(false); // Fecha o modal sem sair
     }
 
-    const handleConfirmExit = () => {
+    const handleEditConfirmExit = () => {
         setEditModal(false);
-        navigate('/'); // Redireciona para a página inicial
+        navigate(`/admin/produtos/editar/${produtoId}`); // Redireciona para edição
+    }
+
+    const handleDeleteCancel = () => {
+        setDeleteModal(false); // Fecha o modal sem sair
+    }
+
+    const handleDeleteConfirm = () => {
+        setDeleteModal(false);
+        deletarProduto();
+
     }
 
     const deletarProduto = async () => {
@@ -64,12 +75,6 @@ function DetalheProdutoPage() {
             alert('Erro ao deletar produto. Tente novamente.');
         } finally {
             setCarregando(false);
-        }
-    };
-
-    const confirmarDelecao = () => {
-        if (window.confirm(`Tem certeza que deseja excluir o produto "${produto?.titulo}"? Esta ação não pode ser desfeita.`)) {
-            deletarProduto();
         }
     };
 
@@ -142,21 +147,52 @@ function DetalheProdutoPage() {
                             </svg>
                         </div>
                         <h3 className="text-lg font-medium text-gray-900 mb-2">
-                            Confirmar Saída
+                            Editar Produto
                         </h3>
                         <p className="text-sm text-gray-500 mb-6">
-                            Tem certeza que deseja sair do painel administrativo? Você será redirecionado para a página inicial.
+                            Deseja editar o produto "{produto?.titulo}"? Você será redirecionado para a página de edição.
                         </p>
                         <div className="flex gap-4 justify-center">
                             <Button 
                                 name="Cancelar" 
                                 color="blue" 
-                                onClick={handleCancelExit}
+                                onClick={handleEditCancelExit}
                             />
                             <Button 
-                                name="Sair" 
+                                name="Editar" 
+                                color="bggreen" 
+                                onClick={handleEditConfirmExit}
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
+        {deletemodal && (
+            <div className="fixed inset-0 bg-inherit bg-opacity-25 backdrop-blur-sm flex items-center justify-center z-50">
+                <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-2xl">
+                    <div className="text-center">
+                        <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                            <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                            </svg>
+                        </div>
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                            Confirmar Deleção
+                        </h3>
+                        <p className="text-sm text-gray-500 mb-6">
+                            Tem certeza que deseja excluir o produto "{produto?.titulo}"? Esta ação não pode ser desfeita.
+                        </p>
+                        <div className="flex gap-4 justify-center">
+                            <Button 
+                                name="Cancelar" 
+                                color="blue" 
+                                onClick={handleDeleteCancel}
+                            />
+                            <Button 
+                                name="Confirmar" 
                                 color="bgred" 
-                                onClick={handleConfirmExit}
+                                onClick={handleDeleteConfirm}
                             />
                         </div>
                     </div>
@@ -232,7 +268,7 @@ function DetalheProdutoPage() {
                             <Button 
                                 name="Excluir Produto" 
                                 color="red" 
-                                onClick={confirmarDelecao}
+                                onClick={() => setDeleteModal(true)}
                             />
                         </div>
                     </div>
