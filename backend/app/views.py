@@ -79,7 +79,7 @@ class ProductList(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['categoria', 'material', 'cor_padrao']
-    search_fields = ['titulo', 'descricao', 'material']
+    search_fields = ['titulo', 'descricao', 'material', 'categoria', 'cor_padrao']
     ordering_fields = ['preco', 'quantidade']
     ordering = ['preco']
 
