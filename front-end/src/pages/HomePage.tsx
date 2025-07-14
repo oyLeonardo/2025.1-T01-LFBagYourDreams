@@ -1,67 +1,41 @@
-import Navbar from '../components/Navbar';
-import { ShoppingBagIcon, ArrowRightIcon, SparklesIcon, HeartIcon, TagIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ShoppingBagIcon, SparklesIcon, HeartIcon, TagIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-
-// Interface para tipagem dos produtos
-interface Produto {
-  id: number;
-  nome: string;
-  descricao: string;
-  preco: number;
-  precoOriginal?: number;
-  imagem: string;
-  coresDisponiveis?: string[];
-  avaliacao?: number;
-}
-
-// Dados dos produtos em destaque
-const produtosDestaque: Produto[] = [
-  {
-    id: 1,
-    nome: "Bolsa de Couro Premium",
-    descricao: "Bolsa em couro legítimo com acabamento artesanal",
-    preco: 299.90,
-    precoOriginal: 349.90,
-    imagem: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=300&q=80",
-    coresDisponiveis: ["#8B4513", "#000000", "#964B00"],
-    avaliacao: 4.8
-  },
-  {
-    id: 2,
-    nome: "Bolsa Térmica para Almoço",
-    descricao: "Mantenha sua comida quentinha com estilo",
-    preco: 149.90,
-    imagem: "https://images.unsplash.com/photo-1591561954557-26941169b49e?auto=format&fit=crop&w=300&q=80",
-    coresDisponiveis: ["#FF6B6B", "#4ECDC4", "#556270"],
-    avaliacao: 4.5
-  },
-  {
-    id: 3,
-    nome: "Mochila Executiva",
-    descricao: "Perfeita para o trabalho com compartimento para laptop",
-    preco: 349.90,
-    precoOriginal: 399.90,
-    imagem: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=300&q=80",
-    coresDisponiveis: ["#2C3E50", "#7F8C8D", "#16A085"],
-    avaliacao: 4.9
-  },
-  {
-    id: 4,
-    nome: "Clutch Elegance",
-    descricao: "Perfeita para eventos noturnos e ocasiões especiais",
-    preco: 199.90,
-    imagem: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=300&q=80",
-    coresDisponiveis: ["#DAA520", "#800020", "#000000"],
-    avaliacao: 4.7
-  }
-];
+import {type Produto} from '../types/produto'
+import ProdutoCard from '../components/ProdutoCard';
 
 function HomePage() {
   const navigate = useNavigate();
+  const [produtosDestaque, setProdutosDestaque] = useState<Produto[]>([]);
+  const [carregando, setCarregando] = useState(true);
   const telefoneVendedora = "+5511999999999";
 
-  // Função para ver detalhes do produto
+  useEffect(() => {
+    const fetchProdutosDestaque = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/api/products/');
+        const data = await response.json();
+        setProdutosDestaque(selecionarDestaques(data));
+      } catch (error) {
+        console.error('Erro ao buscar produtos:', error);
+      } finally {
+        setCarregando(false);
+      }
+    };
+
+    fetchProdutosDestaque();
+  }, []);
+
+  const selecionarDestaques = (produtos: Produto[]): Produto[] => {
+    const ultimasUnidades = produtos.filter(p => p.quantidade < 5);
+    const outrosProdutos = produtos.filter(p => p.quantidade >= 5);
+    const embaralhados = [...outrosProdutos].sort(() => Math.random() - 0.5);
+    const combinados = [...ultimasUnidades, ...embaralhados];
+    return combinados.slice(0, 4); 
+  };
+
   const verDetalhesProduto = (produtoId: number) => {
     navigate(`/produto/${produtoId}`);
   };
@@ -221,50 +195,45 @@ function HomePage() {
           </div>
         </div>
         
-        {/* Produtos em Destaque - Design Minimalista Roxo */}
-        <div id="produtos" className="mt-8 mb-16 w-full max-w-6xl">
+        {/* Produtos em Destaque - Atualizado */}
+        <div id="produtos" className="mt-8 mb-16 w-full max-w-6xl px-4">
           <div className="flex justify-between items-center mb-10">
             <h2 className="text-3xl font-bold">
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#8A2BE2] to-[#4B0082]">
-                Bolsas em Destaque
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-green-800 to-[#1E3F1E]">
+                Destaques do Catálogo
               </span>
             </h2>
-            <div className="text-[#8A2BE2] font-medium flex items-center">
-              <span>Ver todas</span>
-              <ArrowRightIcon className="w-4 h-4 ml-1" />
-            </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {produtosDestaque.map((produto) => (
-              <div 
-                key={produto.id} 
-                className="bg-gradient-to-br from-[#f9f0ff] to-[#e6e6fa] p-5 rounded-2xl shadow-sm border border-[#e0d0f0] group relative overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
-                onClick={() => verDetalhesProduto(produto.id)}
-              >
-                <div className="h-48 mb-4 flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-b from-[#f0e8ff] to-[#d8cfff]">
-                  <img 
-                    src={produto.imagem} 
-                    alt={produto.nome}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.src = `https://via.placeholder.com/300x300/f9f3ff/6A5ACD?text=${encodeURIComponent(produto.nome.substring(0, 15))}`;
-                    }}
-                  />
+          {carregando ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="bg-white rounded-lg shadow-sm p-4">
+                  <div className="animate-pulse">
+                    <div className="bg-gray-200 h-48 rounded-lg"></div>
+                    <div className="mt-4 space-y-2">
+                      <div className="bg-gray-200 h-4 rounded"></div>
+                      <div className="bg-gray-200 h-4 rounded w-3/4"></div>
+                      <div className="bg-gray-200 h-6 rounded w-1/2 mt-2"></div>
+                    </div>
+                  </div>
                 </div>
-                
-                <div className="text-center">
-                  <h3 className="font-bold text-lg text-[#4B0082] mb-2 group-hover:text-[#8A2BE2] transition-colors">
-                    {produto.nome}
-                  </h3>
-                  <p className="font-semibold text-[#8A2BE2]">
-                    R$ {produto.preco.toFixed(2)}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {produtosDestaque.map(produto => (
+                <ProdutoCard
+                  key={produto.id}
+                  produto={produto}
+                  mostrarDescricao={false}
+                  mostrarMaterial={false}
+                  mostrarEstoque={true}
+                  onClick={() => verDetalhesProduto(produto.id)}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Seção: Experiência de Personalização */}
@@ -379,40 +348,7 @@ function HomePage() {
           </a>
         </div>
         
-        {/* Depoimentos */}
-        <div className="max-w-6xl w-full mb-16">
-          <h2 className="text-3xl font-bold text-center text-[#075336] mb-12">
-            O que nossas clientes dizem
-          </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[1, 2, 3].map((item) => (
-              <div key={item} className="bg-white p-6 rounded-2xl shadow-sm border border-[#e0e8e0]">
-                <div className="flex items-center mb-4">
-                  <div className="bg-gray-200 border-2 border-dashed rounded-xl w-16 h-16" />
-                  <div className="ml-4">
-                    <h4 className="font-bold text-[#075336]">Ana Carolina</h4>
-                    <div className="flex">
-                      {[...Array(5)].map((_, i) => (
-                        <svg 
-                          key={i}
-                          className="w-4 h-4 text-[#8FBC8F] fill-current"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                <p className="text-[#5d7a6d] italic">
-                  "Minha bolsa personalizada superou todas as expectativas! A qualidade do material e o cuidado com os detalhes são impressionantes. Recebi vários elogios!"
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
+      
       </div>
       <Footer />
     </div>
