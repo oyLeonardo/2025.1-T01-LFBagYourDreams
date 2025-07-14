@@ -39,7 +39,8 @@ function App() {
           <Route path="/produto/:id" element={<ProdutoPageCatalogo />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/carrinho" element={<Carrinho />} />
-          
+          <Route path="/produtos/search" element={<CatalogoPage />} />
+
           <Route path="*" element={
             <div className="min-h-screen flex items-center justify-center">
               <h1 className="text-2xl font-bold">404 - Página Não Encontrada</h1>
