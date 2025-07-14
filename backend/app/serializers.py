@@ -44,7 +44,7 @@ class OrderSerializer(serializers.ModelSerializer):
             'valor_total', 'status'
         ]
 
-        read_only_fields = ['id']
+        read_only_fields = ['id', 'codigo_carrinho']
 
     def validate_cep(self, value):
         """O cep tem exatamente 8 dígitos e 1 hífen"""
