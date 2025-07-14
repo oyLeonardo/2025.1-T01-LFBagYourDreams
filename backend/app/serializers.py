@@ -7,26 +7,31 @@ from .utils.supabase_utils import upload_file_object_to_supabase
 import re
 
 class CarrinhoSerializer(serializers.ModelSerializer):
+    """Serializer para o modelo Carrinho."""
     class Meta:
         model = Carrinho
         fields = '__all__'
 
 class CorSerializer(serializers.ModelSerializer):
+    """Serializer para o modelo Cor."""
     class Meta:
         model = Cor
         fields = '__all__'
 
 class PersonalizacaoSerializer(serializers.ModelSerializer):
+    """Serializer para o modelo Personalizacao."""
     class Meta:
         model = Personalizacao
         fields = '__all__'
 
 class ProdutoSerializer(serializers.ModelSerializer):
+    """Serializer para o modelo Produto."""
     class Meta:
         model = Produto
         fields = '__all__'
 
 class ProdutoCarrinhoSerializer(serializers.ModelSerializer):
+    """Serializer para o modelo ProdutoCarrinho."""
     class Meta:
         model = ProdutoCarrinho
         fields = '__all__'
@@ -383,3 +388,4 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("O comprimento deve ser maior que 0.")
 
         return value
+    

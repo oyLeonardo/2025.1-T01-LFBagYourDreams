@@ -79,7 +79,9 @@ class ProdutoImagem(models.Model):
     )
     # TROCAMOS URLField POR ImageField
     # O 'upload_to' define a subpasta dentro do AWS_LOCATION ('media/')
-    url = models.URLField(default='https://tixunpfronrbfeswufuv.supabase.co/storage/v1/object/public/imagens-produtos/media/produtos/0a5dc12e-0203-4c98-bf56-3f0671e14902.jpg?')
+    url = models.URLField(default=
+                        'https://tixunpfronrbfeswufuv.supabase.co/storage/v1/object/public/'
+                        'imagens-produtos/media/produtos/0a5dc12e-0203-4c98-bf56-3f0671e14902.jpg?')
     criado_em = models.DateTimeField(auto_now_add=True)
 
     class Meta: # pylint: disable=too-few-public-methods
@@ -135,8 +137,9 @@ class Pedido(models.Model):
     external_reference = models.CharField(max_length=255, unique=True, null=True, blank=True)
 
     def __str__(self):
-        return f"Pedido {self.id} - Status: {self.status}"
+        return f"Pedido {self.id} - Status: {self.status}" # pylint: disable=no-member
 
     class Meta:
+        """Define que este modelo é apenas leitura (sem migrations)"""
         db_table = 'pedido'
         managed = False  # Já que a tabela existe e é controlada externamente

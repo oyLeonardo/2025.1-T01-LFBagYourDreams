@@ -6,7 +6,7 @@ from datetime import datetime
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
 from django.db import transaction, DatabaseError
-from rest_framework import generics, filters, status
+from rest_framework import generics, filters, status, permissions
 from django.core.mail import send_mail
 from rest_framework.views import APIView, View
 from django.urls import reverse
@@ -16,6 +16,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.conf import settings
+from django.core.mail import send_mail
 from .utils.supabase_utils import fetch_from_supabase, insert_to_supabase
 from .services.mercadopago_service import MercadoPagoService
 from . import models, serializers
@@ -74,7 +75,7 @@ class ProductList(generics.ListCreateAPIView):
     """
     API view para listar e criar produtos.
     """
-    queryset = models.Produto.objects.all()
+    queryset = models.Produto.objects.all() # pylint: disable=no-member
     serializer_class = serializers.ProductListSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
@@ -88,7 +89,7 @@ class ProductDetail(generics.RetrieveUpdateDestroyAPIView):
     """
     API view para recuperar, atualizar ou deletar um produto específico.
     """
-    queryset = models.Produto.objects.all()
+    queryset = models.Produto.objects.all() # pylint: disable=no-member
     serializer_class = serializers.ProductDetailSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
 
@@ -97,7 +98,7 @@ logger = logging.getLogger(__name__)
 class OrderList(generics.ListAPIView):
     """Classe que retorna uma lista de pedidos através do GET."""
 
-    queryset = models.Pedido.objects.all()
+    queryset = models.Pedido.objects.all() # pylint: disable=no-member
     serializer_class = serializers.OrderSerializer
     permission_classes = [IsAuthenticated]
 
@@ -117,7 +118,7 @@ class OrderList(generics.ListAPIView):
 class OrderDetail(generics.RetrieveUpdateDestroyAPIView):
     """Classe que permite o GET/POST/DELETE de pedidos individualmente."""
 
-    queryset = models.Pedido.objects.all()
+    queryset = models.Pedido.objects.all() # pylint: disable=no-member
     serializer_class = serializers.OrderSerializer
     permission_classes = [IsAuthenticated]
 
@@ -197,14 +198,14 @@ class ImagemProdutoDeleteView(generics.DestroyAPIView):
     """
     View para deletar uma imagem de produto específica.
     """
-    queryset = models.ProdutoImagem.objects.all()
+    queryset = models.ProdutoImagem.objects.all() # pylint: disable=no-member
     serializer_class = ProdutoImagemSerializer # Precisa de um serializer, mesmo para deletar
     permission_classes = [IsAuthenticated] # Apenas admins podem deletar imagens
 
 class CreatePedidoView(generics.CreateAPIView):
     """Classe que permite a criação de pedidos (POST)."""
 
-    queryset = Pedido.objects.all()
+    queryset = Pedido.objects.all() # pylint: disable=no-member
     serializer_class = OrderSerializer
 
     def create(self, request, *args, **kwargs):
@@ -243,7 +244,7 @@ class CreatePedidoView(generics.CreateAPIView):
         )
 
         if preference and preference.get('status') == 201 \
-            and 'init_point' in preference.get('response', {}):
+                and 'init_point' in preference.get('response', {}):
 
             # Obtém o dicionário de resposta real do MP
             mp_response_data = preference['response']
@@ -256,22 +257,24 @@ class CreatePedidoView(generics.CreateAPIView):
                 status=status.HTTP_201_CREATED
             )
 
-        else:
-            # Sua mensagem de log atual já é boa para depuração
-            logger.error(
-                f"Falha ao criar preferência ou 'init_point' ausente. Resposta MP: {preference}"
-            )
+        # Se chegou aqui, houve erro
+        logger.error(
+            "Falha ao criar preferência ou 'init_point' ausente. Resposta MP: %s",
+            preference  # lazy logging
+        )
 
-            pedido_obj.status = 'failed_mp_creation'
-            pedido_obj.save()
+        pedido_obj.status = 'failed_mp_creation'
+        pedido_obj.save()
 
-            return Response(
-                {"detail": "Link de pagamento ausente ou erro na preferência."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+        return Response(
+            {"detail": "Link de pagamento ausente ou erro na preferência."},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 class PaymentSuccessView(View):
+    """View para exibir a página de sucesso do pagamento."""
     def get(self, request):
+        """Renderiza a página de sucesso do pagamento."""
         # O Mercado Pago retorna parametros na URL apos o pagamento
         payment_id = request.GET.get('payment_id')
         status = request.GET.get('status')
@@ -288,15 +291,20 @@ class PaymentSuccessView(View):
         })
 
 class PendingPaymentView(View):
+    """View para exibir a página de pagamento pendente."""
     def get(self, request):
+        """Renderiza a página de pagamento pendente."""
         return render(request, 'templates/pending_payment.html')
 
 class PaymentFailureView(View):
+    """View para exibir a página de falha no pagamento."""
     def get(self, request):
+        """Renderiza a página de falha no pagamento."""
         return render(request, 'templates/payment_failure.html')
 
 @csrf_exempt
 def mercadopago_webhook(request):
+    """View para receber webhooks do Mercado Pago."""
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
