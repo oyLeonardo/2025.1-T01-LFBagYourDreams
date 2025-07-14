@@ -255,7 +255,7 @@ function ProdutoPage() {
                 <button
                   onClick={adicionarAoCarrinho}
                   disabled={produto.quantidade === 0 || quantidade > produto.quantidade}
-                  className={`w-full py-3 px-4 rounded-lg font-medium ${
+                  className={`w-full py-3 cursor-pointer px-4 rounded-lg font-medium ${
                     produto.quantidade === 0 || quantidade > produto.quantidade
                       ? 'bg-gray-400 cursor-not-allowed' 
                       : 'bg-green-900 text-white hover:bg-green-950'

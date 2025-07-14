@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import Button from '../components/Button';
 import apiClient from '../api';
-
+import Alertas from '../components/Alertas';
 interface ImagemProduto {
   id: number;
   url: string;
@@ -31,7 +31,7 @@ function DetalheProdutoPage() {
     const [carregando, setCarregando] = useState(true);
     const [editmodal, setEditModal] = useState(false);
     const [deletemodal, setDeleteModal] = useState(false);
-
+    const [alerta, setAlerta] = useState<{mensagem: string, tipo: 'info' | 'success' | 'warning' | 'error'} | null>(null);
     // Função para carregar os dados do produto
     useEffect(() => {
         if (!produtoId) {
@@ -61,7 +61,7 @@ function DetalheProdutoPage() {
 
     const handleDeleteConfirm = () => {
         deletarProduto();
-        };
+    };
 
     const handleEditCancelExit = () => {
     setEditModal(false); // Apenas fecha o modal
@@ -81,11 +81,13 @@ function DetalheProdutoPage() {
         try {
             // 3. CORREÇÃO: Usando apiClient para deletar com autenticação
             await apiClient.delete(`/product/${produtoId}/`);
-            alert('Produto deletado com sucesso!');
             navigate('/admin/produtos'); 
         } catch (error) {
             console.error('Erro ao deletar produto:', error);
-            alert('Erro ao deletar produto. Tente novamente.');
+            setAlerta({
+                mensagem: 'Erro ao deletar produto. Tente novamente.',
+                tipo: 'error'
+            });
         } finally {
             setCarregando(false);
         }
