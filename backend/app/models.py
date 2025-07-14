@@ -99,14 +99,52 @@ class ProdutoCarrinho(models.Model):    # pylint: disable=too-few-public-methods
         managed = False
 
 class Pedido(models.Model):
-    mercadopago_preference_id = models.CharField(max_length=255, blank=True, null=True)
-    mercadopago_payment_id = models.CharField(max_length=255, blank=True, null=True)
-    status = models.CharField(max_length=50, default='pending') # Ex: pending, approved, rejected
+    """Representa um pedido realizado por um usuário."""
+    nome_usuario = models.TextField(max_length=255, blank=True, null=True)
+    email_usuario = models.TextField(max_length=255, blank=True, null=True)
+
+    codigo_carrinho = models.ForeignKey(
+        Carrinho,
+        models.DO_NOTHING,
+        db_column='codigo_carrinho_id'
+    )
+
+    cep = models.TextField(max_length=255, blank=True, null=True)
+    bairro = models.TextField(max_length=255, blank=True, null=True)  # Corrigido de 'bairor'
+    complemento = models.TextField(max_length=255, blank=True, null=True)
+    estado = models.TextField(max_length=255, blank=True, null=True)
+    cidade = models.TextField(max_length=255, blank=True, null=True)
+    numero = models.TextField(max_length=255, blank=True, null=True)
+    quadra = models.TextField(max_length=255, blank=True, null=True)
+
+    metodo_pagamento = models.TextField(max_length=255, blank=True, null=True)
+    mercadopago_payment_id = models.CharField(
+        max_length=255, 
+        blank=True, 
+        null=True, 
+        unique=True, 
+        help_text="ID do pagamento gerado pelo Mercado Pago."
+    )
+
+    status = models.CharField(max_length=50, default='pending')  # Ex: pending, approved, rejected
     frete = models.FloatField(blank=True, null=True)
     valor_total = models.FloatField(blank=True, null=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    external_reference = models.CharField(max_length=255, unique=True, null=True, blank=True)
+
+    external_reference = models.CharField(
+        max_length=255, 
+        blank=True, 
+        null=True, 
+        db_index=True, 
+        help_text="Referência externa do pedido enviada ao Mercado Pago."
+    )
 
     def __str__(self):
-        return f"Pedido {self.id} - Status: {self.status}"
+        return f"Pedido {self.id} - Status: {self.status}" # pylint: disable=no-member
+
+    class Meta:
+        """Define que este modelo é apenas leitura (sem migrations)"""
+        db_table = 'pedido'
+        managed = False  # Já que a tabela existe e é controlada externamente
