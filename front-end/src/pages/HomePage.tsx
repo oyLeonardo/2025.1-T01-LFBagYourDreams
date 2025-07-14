@@ -10,7 +10,7 @@ function HomePage() {
   const navigate = useNavigate();
   const [produtosDestaque, setProdutosDestaque] = useState<Produto[]>([]);
   const [carregando, setCarregando] = useState(true);
-  const telefoneVendedora = "+5511999999999";
+  const telefoneVendedora = "+556196188709";
 
   useEffect(() => {
     const fetchProdutosDestaque = async () => {

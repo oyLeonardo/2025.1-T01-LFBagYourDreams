@@ -17,11 +17,11 @@ const Navbar = () => {
         { name: 'Termicas', path: '/categoria/termicas' },
     ];
 
-    const UserIcon = () => (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-        </svg>
-    );
+    // const UserIcon = () => (
+    //     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    //         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+    //     </svg>
+    // );
 
     useEffect(() => {
         if (debouncedSearch.trim()) {
@@ -35,9 +35,9 @@ const Navbar = () => {
                 <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
                     <div className="flex justify-between items-center h-16">
                         <div className="flex-shrink-0 flex items-center ml-0">
-                            <div className="text-[#075336] font-['Playfair_Display'] font-bold text-2xl select-none">
+                            <NavLink to='/' className="text-[#075336] font-['Playfair_Display'] font-bold text-2xl select-none">
                                 LF Bag Your Dreams
-                            </div>
+                            </NavLink>
                         </div>
 
                         <div className="hidden md:flex flex-1 max-w-2xl mx-6">
@@ -65,20 +65,20 @@ const Navbar = () => {
                         </div>
 
                         <div className="hidden md:flex md:items-center md:space-x-4">
-                            <NavLink to="/conta" className="text-gray-700 hover:text-[#075336] p-2">
+                            {/* <NavLink to="/conta" className="text-gray-700 hover:text-[#075336] p-2">
                                 <UserIcon />
-                            </NavLink>
+                            </NavLink> */}
 
                             <div className="ml-1">
                                 <CartDrawer />
                             </div>
 
-                            <NavLink
+                            {/* <NavLink
                                 to="/admin"
                                 className="px-3 py-1.5 bg-[#075336] text-white rounded-md hover:bg-[#053c27] transition-colors text-sm font-medium"
                             >
                                 Admin
-                            </NavLink>
+                            </NavLink> */}
                         </div>
 
                         <div className="flex md:hidden items-center">
