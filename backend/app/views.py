@@ -6,8 +6,9 @@ from datetime import datetime
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
 from django.db import transaction, DatabaseError
-from rest_framework import generics, filters, status, permissions
-from django.core.mail import send_mail
+from rest_framework import generics, filters, status
+from django.core.mail import send_mail, EmailMultiAlternatives
+from django.template.loader import render_to_string
 from rest_framework.views import APIView, View
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
@@ -120,7 +121,7 @@ class OrderDetail(generics.RetrieveUpdateDestroyAPIView):
 
     queryset = models.Pedido.objects.all() # pylint: disable=no-member
     serializer_class = serializers.OrderSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = []
 
     def update(self, request, *args, **kwargs):
         """Atualiza o status de um pedido e envia um e-mail informando o usuário."""
@@ -133,13 +134,30 @@ class OrderDetail(generics.RetrieveUpdateDestroyAPIView):
         self.perform_update(serializer)
 
         new_status = serializer.instance.status
-        if old_status != new_status:
-            email = serializer.instance.email_usuario
-            subject = f"Atualização do Pedido {instance.id}"
-            message = f"Seu pedido foi atualizado para o status: {new_status}."
+        email = serializer.instance.email_usuario
 
-            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
+        if old_status != new_status and email:
+            subject = f"Seu pedido #{instance.id} foi atualizado!"
 
+            context = {
+                'pedido_id': instance.id,
+                'novo_status': new_status,
+                'frete': instance.frete,
+                'valor_total': instance.valor_total,
+                'metodo_pagamento': instance.metodo_pagamento,
+            }
+
+            text_content = f"Seu pedido #{instance.id} foi atualizado para: {new_status}."
+            html_content = render_to_string("email/order_update.html", context)
+
+            email_message = EmailMultiAlternatives(
+                subject=subject,
+                body=text_content,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[email],
+            )
+            email_message.attach_alternative(html_content, "text/html")
+            email_message.send()
 
         return Response(serializer.data)
 

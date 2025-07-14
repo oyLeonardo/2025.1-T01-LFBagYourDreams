@@ -15,7 +15,7 @@ class Carrinho(models.Model):   # pylint: disable=too-few-public-methods
 
 
     def __str__(self):
-        return f'Subtotal: {self.subtotal}'
+        return f'{self.id}'
 
 
 class Cor(models.Model):    # pylint: disable=too-few-public-methods
@@ -111,9 +111,8 @@ class Pedido(models.Model):
 
     codigo_carrinho = models.ForeignKey(
         Carrinho,
-        on_delete=models.CASCADE,
-        related_name='pedidos',  # nome mais padrão para acesso reverso
-        db_column='codigo_carrinho_id'  # evita o erro do
+        models.DO_NOTHING,
+        db_column='codigo_carrinho_id'
     )
 
     cep = models.TextField(max_length=255, blank=True, null=True)
