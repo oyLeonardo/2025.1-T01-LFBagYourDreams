@@ -10,7 +10,7 @@ const Footer = () => {
             <p className="text-[#a2d9c3] text-sm mb-4">
               Bolsas artesanais com propósito e autenticidade
             </p>
-            <div className="flex space-x-4">
+            {/* <div className="flex space-x-4">
               {['facebook', 'instagram', 'whatsapp'].map((rede) => (
                 <a 
                   key={rede} 
@@ -20,7 +20,7 @@ const Footer = () => {
                   <div className="bg-gray-200 border-2 border-dashed rounded-xl w-6 h-6" />
                 </a>
               ))}
-            </div>
+            </div> */}
           </div>
           
           <div>
@@ -37,11 +37,17 @@ const Footer = () => {
           <div>
             <h3 className="font-bold text-lg mb-4">Ajuda</h3>
             <ul className="space-y-2">
-              {['Como Personalizar', 'Trocas e Devoluções', 'Perguntas Frequentes', 'Entregas', 'Pagamentos'].map((item) => (
+              {/* {['Como Personalizar', 'Trocas e Devoluções', 'Perguntas Frequentes', 'Entregas', 'Pagamentos'].map((item) => (
                 <li key={item}>
-                  <a href="#" className="text-[#a2d9c3] hover:text-white transition-colors">{item}</a>
+                  <a href="#personalizacao" className="text-[#a2d9c3] hover:text-white transition-colors">{item}</a>
                 </li>
-              ))}
+              ))} */}
+              <li>
+                  <a href="#personalizacao" className="text-[#a2d9c3] hover:text-white transition-colors">Como Personalizar</a>
+              </li>
+              <li>
+                  <a href="#trocas" className="text-[#a2d9c3] hover:text-white transition-colors">Trocas e Devoluções</a>
+              </li>
             </ul>
           </div>
           
@@ -79,11 +85,11 @@ const Footer = () => {
               </p>
             </div>
             <div className="mt-4 md:mt-0">
-              <div className="flex space-x-6">
+              {/* <div className="flex space-x-6">
                 {['Termos de Uso', 'Política de Privacidade', 'FAQ'].map((item) => (
                   <a key={item} href="#" className="text-[#a2d9c3] hover:text-white transition-colors">{item}</a>
                 ))}
-              </div>
+              </div> */}
             </div>
           </div>
         </div>

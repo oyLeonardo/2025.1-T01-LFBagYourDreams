@@ -1,6 +1,6 @@
 """Modelos do banco de dados usados pelo aplicativo Django."""
 
-from types import CellType
+#from types import CellType
 from django.db import models
 
 class Carrinho(models.Model):   # pylint: disable=too-few-public-methods

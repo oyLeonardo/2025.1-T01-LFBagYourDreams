@@ -1,14 +1,13 @@
 """Arquivo de configuração do pytest para o ambiente Django."""
 
+import io
 import pytest
 from django.apps import apps
-from faker import Faker
-from app.models import Carrinho, Cor, Pedido, Produto
 from django.contrib.auth.models import User
 from rest_framework.test import APIClient
-import io
+from faker import Faker
 from PIL import Image
-
+from app.models import Carrinho, Cor, Pedido, Produto
 
 @pytest.fixture(autouse=True, scope="session")
 def django_test_environment(django_test_environment): # pylint: disable=unused-argument, redefined-outer-name
@@ -27,6 +26,7 @@ def faker():
 
 @pytest.fixture
 def common_client():
+    """Fixture que fornece um cliente autenticado para testes comuns."""
     user = User.objects.create_user(
         username="testuser",
         password="12345",
@@ -41,6 +41,7 @@ def common_client():
 
 @pytest.fixture
 def staff_client():
+    """Fixture que fornece um cliente autenticado para testes de staff."""
 
     user = User.objects.create_user(
         username="staffuser",
@@ -56,6 +57,7 @@ def staff_client():
 
 @pytest.fixture
 def img():
+    """Fixture que fornece uma imagem de teste em formato JPEG."""
 
     file = io.BytesIO()
     image = Image.new("RGB", (100, 100), "white")
@@ -68,8 +70,9 @@ def img():
 
 @pytest.fixture
 def products(db):
+    """Fixture que cria produtos de exemplo para testes."""
     yield [
-        Produto.objects.create(
+        Produto.objects.create( # pylint: disable=no-member
             preco=149.90,
             quantidade=10,
             categoria="Camisetas",
@@ -81,7 +84,7 @@ def products(db):
             comprimento=70.0,
             largura=50.0
         ),
-        Produto.objects.create(
+        Produto.objects.create( # pylint: disable=no-member
             preco=349.90,
             quantidade=5,
             categoria="Calçados",
@@ -93,7 +96,7 @@ def products(db):
             comprimento=30.0,
             largura=10.0
         ),
-        Produto.objects.create(
+        Produto.objects.create( # pylint: disable=no-member
             preco=89.90,
             quantidade=20,
             categoria="Acessórios",
@@ -110,16 +113,17 @@ def products(db):
 
 @pytest.fixture
 def colors(db):
+    """Fixture que cria cores de exemplo para testes."""
     yield [
-        Cor.objects.create(
+        Cor.objects.create( # pylint: disable=no-member
             nome='SlateBlue',
             rgb='#6A5ACD',
         ),
-        Cor.objects.create(
+        Cor.objects.create( # pylint: disable=no-member
             nome='DodgerBlue',
             rgb='#1E90FF',
         ),
-        Cor.objects.create(
+        Cor.objects.create( # pylint: disable=no-member
             nome='LightGreen',
             rgb='#90EE90',
         ),
@@ -128,18 +132,20 @@ def colors(db):
 
 @pytest.fixture
 def carts(db):
+    """Fixture que cria carrinhos de exemplo para testes."""
     yield [
-        Carrinho.objects.create(subtotal=149.90),
-        Carrinho.objects.create(subtotal=349.90),
-        Carrinho.objects.create(subtotal=89.90),
+        Carrinho.objects.create(subtotal=149.90), # pylint: disable=no-member
+        Carrinho.objects.create(subtotal=349.90), # pylint: disable=no-member
+        Carrinho.objects.create(subtotal=89.90), # pylint: disable=no-member
     ]
 
 
 @pytest.fixture
-def orders(db, carts):
+def orders(db, carts): # pylint: disable=redefined-outer-name
+    """Fixture que cria pedidos de exemplo para testes."""
 
     yield [
-        Pedido.objects.create(
+        Pedido.objects.create( # pylint: disable=no-member
             email_usuario="cliente1@example.com",
             codigo_carrinho=carts[0],
             cep="01310-200",
@@ -156,7 +162,7 @@ def orders(db, carts):
             valor_total=199.90,
             external_reference="REF001"
         ),
-        Pedido.objects.create(
+        Pedido.objects.create( # pylint: disable=no-member
             email_usuario="cliente2@example.com",
             codigo_carrinho=carts[1],
             cep="30140-000",
@@ -173,7 +179,7 @@ def orders(db, carts):
             valor_total=329.90,
             external_reference="REF002"
         ),
-        Pedido.objects.create(
+        Pedido.objects.create( # pylint: disable=no-member
             email_usuario="cliente3@example.com",
             codigo_carrinho=carts[2],
             cep="70070-350",
