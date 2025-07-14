@@ -151,7 +151,7 @@ function CatalogoPage() {
             {productsFiltrados.map(produto => (
               <div 
               key={produto.id} 
-              className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col h-full"
+              className="bg-white rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-shadow overflow-hidden flex flex-col h-full"
               onClick={() => verDetalhes(produto.id)}
               role="button"
               tabIndex={0}

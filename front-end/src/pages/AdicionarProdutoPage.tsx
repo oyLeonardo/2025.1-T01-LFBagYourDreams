@@ -246,6 +246,7 @@ function AdicionarProdutoPage(){
         } finally {
             setCarregando(false);
         }
+        setCarregando(false);
     };
 
     const handleCancelSave = () => {

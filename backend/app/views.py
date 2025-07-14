@@ -7,7 +7,7 @@ from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
 from django.db import transaction, DatabaseError
 from rest_framework import generics, filters, status
-
+from django.core.mail import send_mail
 from rest_framework.views import APIView, View
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
