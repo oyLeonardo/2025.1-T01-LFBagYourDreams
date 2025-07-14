@@ -7,20 +7,20 @@ function AdminPage() {
     const[active,setActive] = useState("pedidos")
     const location = useLocation()
     const navigate = useNavigate()
-    const[showExitModal, setShowExitModal] = useState(false); // Modal de confirmação de saída
+    const[showExitModal, setShowExitModal] = useState(false);
 
     const handleSairClick = () => {
-        setShowExitModal(true); // Mostra o modal de confirmação
+        setShowExitModal(true); 
     }
 
     const handleConfirmExit = () => {
-        // Aqui você pode adicionar a lógica de logout, como limpar o token de autenticação
         setShowExitModal(false);
+        // se precisr, a gente tira o token do localStorage
         navigate('/');
     }
 
     const handleCancelExit = () => {
-        setShowExitModal(false); // Fecha o modal sem sair
+        setShowExitModal(false); 
     }
 
     useEffect(() => {
@@ -30,10 +30,8 @@ function AdminPage() {
         if (currentPathSegment === 'pedidos') {
             setActive('pedidos');
         } else if (currentPathSegment === 'produtos' || currentPathSegment === 'adicionarproduto') {
-            // Mantém "produtos" ativo tanto na página de produtos quanto na de adicionar produto
             setActive('produtos');
         } else if (currentPathSegment === 'admin' || currentPathSegment === '') {
-            // Se a URL for apenas /admin, redireciona para o padrão
             setActive('pedidos');
             navigate('/admin/pedidos', { replace: true });
         }
@@ -78,7 +76,6 @@ function AdminPage() {
             {/* tab lateral esquerda */}
             <div className="flex flex-col w-60 px-3 bg-white">
                 <div className="flex items-center h-32 justify-center mb-10">
-                    {/* aqui vai ter a nossa logo */}
                     <h1 className="text-4xl md:text-md font-black text-[#032719] mb-4">
                         <span className="text-[#034722]">ADMIN</span>
                     </h1>
@@ -87,14 +84,14 @@ function AdminPage() {
                     <Selector
                         name="PEDIDOS"
                         isActive={active === "pedidos"}
-                        onClick={() => setActive("pedidos")} // Mantém para o CSS
+                        onClick={() => setActive("pedidos")} 
                     />
                 </Link>
                 <Link to="produtos">
                     <Selector
                         name="PRODUTOS"
                         isActive={active === "produtos"}
-                        onClick={() => setActive("produtos")} // Mantém para o CSS
+                        onClick={() => setActive("produtos")} 
                     />
                 </Link>
             </div>

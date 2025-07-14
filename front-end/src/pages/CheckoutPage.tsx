@@ -738,7 +738,7 @@ const CheckoutPage = () => {
                 <div className="mt-8">
                   <button
                     type="submit"
-                    className="w-full bg-gradient-to-r from-[#8A2BE2] to-[#6A5ACD] text-white py-4 rounded-xl font-bold hover:from-[#9a3bf0] hover:to-[#7a6ae6] transition-all duration-300 shadow-lg"
+                    className="w-full bg-gradient-to-r from-[#8A2BE2] to-[#6A5ACD] cursor-pointer text-white py-4 rounded-xl font-bold hover:from-[#9a3bf0] hover:to-[#7a6ae6] transition-all duration-300 shadow-lg"
                   >
                     Finalizar Compra
                   </button>
@@ -828,7 +828,7 @@ const CheckoutPage = () => {
 
       {/* Popup de Sucesso */}
       {showSuccessPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 backdrop-blur-sm bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl max-w-md w-full overflow-hidden transform transition-all duration-300 animate-fadeIn">
             <div className="bg-gradient-to-r from-[#8A2BE2] to-[#6A5ACD] p-8 text-center">
               <div className="mx-auto bg-white rounded-full w-24 h-24 flex items-center justify-center mb-6">

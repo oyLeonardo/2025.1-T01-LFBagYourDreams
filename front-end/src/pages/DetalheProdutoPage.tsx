@@ -1,7 +1,8 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import Button from '../components/Button';
-
+import apiClient from '../api';
+import Alertas from '../components/Alertas';
 interface ImagemProduto {
   id: number;
   url: string;
@@ -29,55 +30,9 @@ function DetalheProdutoPage() {
     const [produto, setProduto] = useState<Produto | null>(null);
     const [carregando, setCarregando] = useState(true);
     const [editmodal, setEditModal] = useState(false);
-    const [deletemodal,setDeleteModal] = useState(false);
-    const [erro, setErro] = useState<string | null>(null);
-
-    const handleEditCancelExit = () => {
-        setEditModal(false); // Fecha o modal sem sair
-    }
-
-    const handleEditConfirmExit = () => {
-        setEditModal(false);
-        navigate(`/admin/produtos/editar/${produtoId}`); // Redireciona para edição
-    }
-
-    const handleDeleteCancel = () => {
-        setDeleteModal(false); // Fecha o modal sem sair
-    }
-
-    const handleDeleteConfirm = () => {
-        setDeleteModal(false);
-        deletarProduto();
-
-    }
-
-    const deletarProduto = async () => {
-        if (!produto || !produtoId) return;
-        
-        try {
-            setCarregando(true);
-            
-            const response = await fetch(`http://localhost:8000/api/product/${produtoId}/`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            });
-            
-            if (response.ok) {
-                alert('Produto deletado com sucesso!');
-                navigate('/admin/produtos');
-            } else {
-                throw new Error(`Erro ao deletar: ${response.status}`);
-            }
-        } catch (error) {
-            console.error('Erro ao deletar produto:', error);
-            alert('Erro ao deletar produto. Tente novamente.');
-        } finally {
-            setCarregando(false);
-        }
-    };
-
+    const [deletemodal, setDeleteModal] = useState(false);
+    const [alerta, setAlerta] = useState<{mensagem: string, tipo: 'info' | 'success' | 'warning' | 'error'} | null>(null);
+    // Função para carregar os dados do produto
     useEffect(() => {
         if (!produtoId) {
             setCarregando(false);
@@ -85,29 +40,58 @@ function DetalheProdutoPage() {
         }
 
         const fetchProduto = async () => {
+            setCarregando(true);
             try {
-                setCarregando(true);
-                
-                // Primeiro tenta buscar do backend
-                const response = await fetch(`http://localhost:8000/api/product/${produtoId}`);
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    setProduto(data);
-                } else {
-                    // Fallback para dados mockados (durante desenvolvimento)
-                    console.log('Backend não disponível');
-                    setProduto(produto || null);
-                }
+                // 2. CORREÇÃO: Usando apiClient para buscar os dados com autenticação
+                const response = await apiClient.get<Produto>(`/product/${produtoId}/`);
+                setProduto(response.data);
             } catch (error) {
                 console.error('Erro ao buscar produto:', error);
-                setErro('Não foi possível carregar o produto. Tente novamente mais tarde.');
+                setProduto(null); // Define como nulo se houver erro
             } finally {
                 setCarregando(false);
             }
         };
         fetchProduto();
     }, [produtoId]);
+
+    const handleDeleteCancel = () => {
+        setDeleteModal(false);
+        };
+
+    const handleDeleteConfirm = () => {
+        deletarProduto();
+    };
+
+    const handleEditCancelExit = () => {
+    setEditModal(false); // Apenas fecha o modal
+    };
+
+    const handleEditConfirmExit = () => {
+        setEditModal(false);
+        navigate(`/admin/produtos/editar/${produtoId}`); 
+    };
+
+
+    const deletarProduto = async () => {
+        if (!produtoId) return;
+        
+        setCarregando(true);
+        setDeleteModal(false);
+        try {
+            // 3. CORREÇÃO: Usando apiClient para deletar com autenticação
+            await apiClient.delete(`/product/${produtoId}/`);
+            navigate('/admin/produtos'); 
+        } catch (error) {
+            console.error('Erro ao deletar produto:', error);
+            setAlerta({
+                mensagem: 'Erro ao deletar produto. Tente novamente.',
+                tipo: 'error'
+            });
+        } finally {
+            setCarregando(false);
+        }
+    };
 
     if (carregando) {
     return (
@@ -138,7 +122,7 @@ function DetalheProdutoPage() {
     return (
         <>
         {editmodal && (
-            <div className="fixed inset-0 bg-inherit bg-opacity-25 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50">
                 <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-2xl">
                     <div className="text-center">
                         <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
@@ -169,7 +153,7 @@ function DetalheProdutoPage() {
             </div>
         )}
         {deletemodal && (
-            <div className="fixed inset-0 bg-inherit bg-opacity-25 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50">
                 <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-2xl">
                     <div className="text-center">
                         <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">

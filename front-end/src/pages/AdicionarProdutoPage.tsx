@@ -3,6 +3,7 @@ import Button from "../components/Button"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { useState, useEffect } from "react"
 import Alertas from "../components/Alertas"
+import apiClient from '../api'; 
 
 function AdicionarProdutoPage(){
     const navigate = useNavigate()
@@ -33,9 +34,7 @@ function AdicionarProdutoPage(){
         }));
     };
 
-    // Funções de validação com regex
     const handleTituloChange = (value: string) => {
-        // Apenas letras, espaços e acentos (sem números ou caracteres especiais)
         const regex = /^[a-zA-ZÀ-ÿ\s]*$/;
         if (regex.test(value) || value === '') {
             handleInputChange('titulo', value);
@@ -43,7 +42,6 @@ function AdicionarProdutoPage(){
     };
 
     const handlePrecoChange = (value: string) => {
-        // Apenas números e um ponto decimal (formato: 123.45)
         const regex = /^\d*\.?\d*$/;
         if (regex.test(value) || value === '') {
             handleInputChange('preco', value);
@@ -51,7 +49,6 @@ function AdicionarProdutoPage(){
     };
 
     const handleQuantidadeChange = (value: string) => {
-        // Apenas números inteiros maiores que 0
         const regex = /^[1-9]\d*$/;
         if (regex.test(value) || value === '') {
             handleInputChange('quantidade', value);
@@ -59,72 +56,52 @@ function AdicionarProdutoPage(){
     };
 
     const handleDimensaoChange = (field: string, value: string) => {
-        // Apenas números decimais positivos (formato: 123.45)
         const regex = /^\d*\.?\d*$/;
         if (regex.test(value) || value === '') {
             handleInputChange(field, value);
         }
     };
 
-    const handleCorChange = (value: string) => {
-        // Apenas letras, espaços e acentos (para cores como "Marrom Escuro")
-        const regex = /^[a-zA-ZÀ-ÿ\s]*$/;
-        if (regex.test(value) || value === '') {
-            handleInputChange('cor_padrao', value);
-        }
-    };
-
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const [imagemRemovidaManualmente, setImagemRemovidaManualmente] = useState(false);
     
-    // Carregar dados do produto para edição
     useEffect(() => {
         if (isEditMode && produtoId) {
             const carregarProduto = async () => {
+                setCarregando(true);
                 try {
-                    setCarregando(true);
-                    const response = await fetch(`http://localhost:8000/api/product/${produtoId}`);
+                    const response = await apiClient.get(`/product/${produtoId}/`);
                     
-                    if (response.ok) {
-                        const produto = await response.json();
-                        setFormData({
-                            titulo: produto.titulo || "",
-                            quantidade: produto.quantidade?.toString() || "",
-                            descricao: produto.descricao || "",
-                            categoria: produto.categoria || "",
-                            preco: produto.preco?.toString() || "",
-                            material: produto.material || "",
-                            cor_padrao: produto.cor_padrao || "",
-                            comprimento: produto.comprimento?.toString() || "",
-                            altura: produto.altura?.toString() || "",
-                            largura: produto.largura?.toString() || "",
-                            imagem: null // Não carregamos a imagem existente no form
-                        });
+                    const produto = response.data;
+                    setFormData(prevState => ({
+                        ...prevState,
                         
-                        // Se houver imagem, mostrar preview
-                        if (produto.imagens && produto.imagens.length > 0) {
-                            setPreviewImage(produto.imagens[0].url);
-                        }
-                    } else {
-                        setAlerta({
-                            mensagem: 'Erro ao carregar dados do produto',
-                            tipo: 'error'
-                        });
-                    }
+                        titulo: produto.titulo || "",
+                        quantidade: produto.quantidade?.toString() || "",
+                        descricao: produto.descricao || "",
+                        categoria: produto.categoria || "",
+                        preco: produto.preco?.toString() || "",
+                        material: produto.material || "",
+                        cor_padrao: produto.cor_padrao || "",
+                        comprimento: produto.comprimento?.toString() || "",
+                        altura: produto.altura?.toString() || "",
+                        largura: produto.largura?.toString() || "",
+                        
+                    }));
+
+                    if (produto.imagens && produto.imagens.length > 0) {
+                    setPreviewImage(produto.imagens[0].url);
+                }
+                    
                 } catch (error) {
                     console.error('Erro ao carregar produto:', error);
-                    setAlerta({
-                        mensagem: 'Erro ao carregar dados do produto',
-                        tipo: 'error'
-                    });
                 } finally {
                     setCarregando(false);
                 }
             };
-            
             carregarProduto();
         }
-    }, [isEditMode, produtoId]);
+        }  , [isEditMode, produtoId]);
     
     const [previewImageFile, setPreviewImageFile] = useState<string | null>(null);
     
@@ -137,9 +114,9 @@ function AdicionarProdutoPage(){
                 imagem: file
             }));
             console.log('Nova imagem selecionada:', file);
-            // Limpar a imagem existente quando uma nova for selecionada
+            
             setPreviewImage(null);
-            setImagemRemovidaManualmente(false); // Reset do flag de remoção manual
+            setImagemRemovidaManualmente(false);
             
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -152,13 +129,10 @@ function AdicionarProdutoPage(){
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         
-        // Limpar alertas anteriores
         setAlerta(null);
         
-        // Validação mais robusta com regex
         const erros = [];
         
-        // Validar título (apenas letras, espaços e acentos)
         const tituloRegex = /^[a-zA-ZÀ-ÿ\s]+$/;
         if (!formData.titulo.trim()) {
             erros.push('Título é obrigatório');
@@ -166,7 +140,6 @@ function AdicionarProdutoPage(){
             erros.push('Título deve conter apenas letras e espaços');
         }
         
-        // Validar preço (números decimais positivos)
         const precoRegex = /^\d+(\.\d{1,2})?$/;
         if (!formData.preco) {
             erros.push('Preço é obrigatório');
@@ -174,7 +147,6 @@ function AdicionarProdutoPage(){
             erros.push('Preço deve ser um valor válido maior que zero (ex: 89.90)');
         }
         
-        // Validar quantidade (números inteiros maiores que 0)
         const quantidadeRegex = /^[1-9]\d*$/;
         if (!formData.quantidade) {
             erros.push('Quantidade é obrigatória');
@@ -185,14 +157,13 @@ function AdicionarProdutoPage(){
         if (!formData.categoria) erros.push('Categoria é obrigatória');
         if (!formData.material) erros.push('Material é obrigatório');
         
-        // Para criação, imagem é obrigatória. Para edição, só se não houver imagem existente
+
         if (!isEditMode && !formData.imagem) {
             erros.push('Imagem é obrigatória');
         } else if (isEditMode && !formData.imagem && !previewImage) {
             erros.push('Imagem é obrigatória');
         }
         
-        // Validar dimensões (se preenchidas, devem ser números decimais positivos)
         const dimensaoRegex = /^\d*\.?\d+$/;
         if (formData.comprimento && !dimensaoRegex.test(formData.comprimento)) {
             erros.push('Comprimento deve ser um número válido (ex: 25.5)');
@@ -212,135 +183,62 @@ function AdicionarProdutoPage(){
             return;
         }
         
-        // Mostrar modal de confirmação
         setShowConfirmModal(true);
     };
 
     const handleConfirmSave = async () => {
+        setCarregando(true);
+        setShowConfirmModal(false);
+
+        const dadosParaEnvio = {
+            titulo: formData.titulo,
+            quantidade: parseInt(formData.quantidade) || 1,
+            descricao: formData.descricao,
+            categoria: formData.categoria,
+            preco: parseFloat(formData.preco) || 0,
+            material: formData.material,
+            cor_padrao: formData.cor_padrao,
+            comprimento: formData.comprimento ? parseFloat(formData.comprimento) : null,
+            altura: formData.altura ? parseFloat(formData.altura) : null,
+            largura: formData.largura ? parseFloat(formData.largura) : null,
+        };
+        
+        const formDataToSend = new FormData();
+        Object.entries(dadosParaEnvio).forEach(([key, value]) => {
+            if (value !== null && value !== undefined) {
+                formDataToSend.append(key, value.toString());
+            }
+        });
+
+    
+        if (formData.imagem) {
+            formDataToSend.append('imagem', formData.imagem);
+        }
+
+        if (imagemRemovidaManualmente) {
+            formDataToSend.append('imagem_removida', 'true');
+        }
+        
+        const url = isEditMode 
+            ? `/product/${produtoId}/` // URL para atualizar
+            : '/products/';               // URL para criar
+            
+        const metodo = isEditMode ? 'put' : 'post'; 
+
         try {
-            setShowConfirmModal(false);
-            setCarregando(true);
-            
-            // Preparar dados para envio (sem imagem)
-            const dadosParaEnvio = {
-                titulo: formData.titulo,
-                quantidade: parseInt(formData.quantidade) || 1,
-                descricao: formData.descricao,
-                categoria: formData.categoria,
-                preco: parseFloat(formData.preco) || 0,
-                material: formData.material,
-                cor_padrao: formData.cor_padrao,
-                comprimento: formData.comprimento ? parseFloat(formData.comprimento) : null,
-                altura: formData.altura ? parseFloat(formData.altura) : null,
-                largura: formData.largura ? parseFloat(formData.largura) : null,
-            };
+            const response = await apiClient[metodo](url, formDataToSend);
 
-            console.log('Dados para envio:', dadosParaEnvio);
-            console.log('Nova imagem selecionada:', !!formData.imagem);
-            console.log('Imagem existente preservada:', !!previewImage && !formData.imagem);
-            console.log('Imagem removida manualmente:', imagemRemovidaManualmente);
-            let response;
+            console.log(`Produto ${isEditMode ? 'atualizado' : 'criado'}:`, response.data);
+            setAlerta({
+                mensagem: `Produto ${isEditMode ? 'atualizado' : 'adicionado'} com sucesso!`,
+                tipo: 'success'
+            });
             
-            // Determinar URL e método baseado no modo
-            const url = isEditMode 
-                ? `http://localhost:8000/api/product/${produtoId}/`
-                : 'http://localhost:8000/api/products/';
-            const method = isEditMode ? 'PUT' : 'POST';
-            
-            console.log('🌐 INFORMAÇÕES DA API:');
-            console.log('  📍 URL:', url);
-            console.log('  🔧 Método:', method);
-            console.log('  📝 Modo:', isEditMode ? 'EDIÇÃO' : 'CRIAÇÃO');
-            console.log('  🆔 Produto ID:', produtoId || 'N/A');
-            
-            // Usar FormData quando:
-            // 1. Nova imagem foi selecionada (para criar ou substituir)
-            // 2. Estamos criando um produto novo (obrigatório ter imagem)
-            // 3. Imagem foi removida manualmente (para indicar remoção)
-            if (formData.imagem || !isEditMode || imagemRemovidaManualmente) {
-                const formDataToSend = new FormData();
-                
-                Object.entries(dadosParaEnvio).forEach(([key, value]) => {
-                    if (value !== null && value !== undefined) {
-                        formDataToSend.append(key, value.toString());
-                    }
-                });
-                
-                // Adicionar nova imagem (substitui a existente)
-                if (formData.imagem) {
-                    formDataToSend.append('imagens', formData.imagem);
-                    console.log('Enviando nova imagem para substituir a existente');
-                    console.log('Nova imagem selecionada:', formData.imagem);
-                    console.log('datatosend:', formDataToSend.get('imagens'));
-                }
-                // Sinalizar remoção de imagem existente
-                else if (imagemRemovidaManualmente) {
-                    formDataToSend.append('remover_imagem', 'true');
-                    console.log('Sinalizando remoção da imagem existente');
-                }
-                
-                console.log(`🚀 FAZENDO REQUISIÇÃO ${method}:`);
-                console.log('  📍 URL:', url);
-                console.log('  📦 Tipo de dados: FormData (com imagem)');
-                console.log('  🖼️ Contém imagem:', !!formData.imagem);
-                
-                // Log detalhado do FormData
-                console.log('  📋 CONTEÚDO DO FORMDATA:');
-                for (let pair of formDataToSend.entries()) {
-                    if (pair[0] === 'imagem' && pair[1] instanceof File) {
-                        console.log(`    ${pair[0]}:`, pair[1], `(${pair[1].name}, ${pair[1].size} bytes)`);
-                    } else {
-                        console.log(`    ${pair[0]}:`, pair[1]);
-                    }
-                }
-                
-                response = await fetch(url, {
-                    method: method,
-                    body: formDataToSend
-                });
-            } else {
-                console.log(`🚀 FAZENDO REQUISIÇÃO ${method}:`);
-                console.log('  📍 URL:', url);
-                console.log('  📦 Tipo de dados: JSON (sem imagem)');
-                console.log('  💾 Mantendo imagem existente');
-                
-                // Modo edição sem nova imagem - mantém a imagem existente
-                response = await fetch(url, {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(dadosParaEnvio)
-                });
-            }
+            setTimeout(() => navigate('/admin/produtos'), 2000);
 
-            if (response.ok) {
-                const resultado = await response.json();
-                console.log(`✅ SUCESSO - Requisição ${method} completada:`);
-                console.log('  📍 URL usada:', url);
-                console.log('  📊 Status:', response.status);
-                console.log('  📝 Resultado:', resultado);
-                console.log(`Produto ${isEditMode ? 'atualizado' : 'criado'}:`, resultado);
-                setAlerta({
-                    mensagem: `Produto ${isEditMode ? 'atualizado' : 'adicionado'} com sucesso!`,
-                    tipo: 'success'
-                });
-                setTimeout(() => {
-                    setShowConfirmModal(false);
-                    navigate('/admin/produtos');
-                }, 2000);
-            } else {
-                const errorData = await response.text();
-                console.error(`❌ ERRO - Requisição ${method} falhou:`);
-                console.error('  📍 URL usada:', url);
-                console.error('  📊 Status:', response.status);
-                console.error('  📄 Resposta:', errorData);
-                console.error('Erro na resposta:', errorData);
-                throw new Error(`Erro ${response.status}: ${errorData}`);
-            }
         } catch (error) {
             console.error(`Erro ao ${isEditMode ? 'atualizar' : 'adicionar'} produto:`, error);
-            const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+            const errorMessage = error.response?.data?.detail || error.message || 'Erro desconhecido';
             setAlerta({
                 mensagem: `Erro ao ${isEditMode ? 'atualizar' : 'adicionar'} produto: ${errorMessage}`,
                 tipo: 'error'
@@ -348,6 +246,7 @@ function AdicionarProdutoPage(){
         } finally {
             setCarregando(false);
         }
+        setCarregando(false);
     };
 
     const handleCancelSave = () => {
@@ -451,7 +350,7 @@ function AdicionarProdutoPage(){
                                  <label className="font-bold" htmlFor="material">Material:</label>
 
                                 <select value={formData.material} onChange={(e) => handleInputChange('material', e.target.value)} className="flex border-solid items-start px-2 justify-items-start p-2 text-start border-1 rounded-md w-full outline-0 shadow-sm" name="material" id="material">
-                                <option value="">Selecione um material</option>
+                                <option value="" disabled selected>Selecione um material</option>
                                 <option value="Couro">Couro</option>
                                 <option value="Tecido">Tecido</option>
                                 <option value="Sintético">Sintético</option>
@@ -461,12 +360,48 @@ function AdicionarProdutoPage(){
                         </div>
                         <div className="flex flex-row gap-2">
                             <div className="w-full">
-                                <label className="font-bold">Cor</label>
-                                <InputText 
+                                <label className="font-bold" htmlFor="cor">Cor:</label>
+                                <select 
                                     value={formData.cor_padrao} 
-                                    onChange={(e) => handleCorChange(e.target.value)} 
-                                    placeholder="Ex: Marrom Escuro"
-                                />
+                                    onChange={(e) => handleInputChange('cor_padrao', e.target.value)} 
+                                    className="flex border-solid items-start px-2 justify-items-start p-2 text-start border-1 rounded-md w-full outline-0 shadow-sm" 
+                                    name="cor" 
+                                    id="cor"
+                                >
+                                    <option value="" disabled selected>Selecione uma cor</option>
+                                    <option value="vermelho">Vermelho</option>
+                                    <option value="azul">Azul</option>
+                                    <option value="verde">Verde</option>
+                                    <option value="amarelo">Amarelo</option>
+                                    <option value="preto">Preto</option>
+                                    <option value="branco">Branco</option>
+                                    <option value="cinza">Cinza</option>
+                                    <option value="rosa">Rosa</option>
+                                    <option value="roxo">Roxo</option>
+                                    <option value="laranja">Laranja</option>
+                                    <option value="dourado">Dourado</option>
+                                    <option value="prata">Prata</option>
+                                    <option value="verde militar">Verde Militar</option>
+                                    <option value="vinho">Vinho</option>
+                                    <option value="marrom">Marrom</option>
+                                    <option value="bege">Bege</option>
+                                    <option value="turquesa">Turquesa</option>
+                                    <option value="azul marinho">Azul Marinho</option>
+                                    <option value="coral">Coral</option>
+                                    <option value="lilás">Lilás</option>
+                                    <option value="vermelho escuro">Vermelho Escuro</option>
+                                    <option value="verde claro">Verde Claro</option>
+                                    <option value="azul claro">Azul Claro</option>
+                                    <option value="amarelo ouro">Amarelo Ouro</option>
+                                    <option value="grafite">Grafite</option>
+                                    <option value="caramelo">Caramelo</option>
+                                    <option value="champagne">Champagne</option>
+                                    <option value="petróleo">Petróleo</option>
+                                    <option value="salmão">Salmão</option>
+                                    <option value="vinho tinto">Vinho Tinto</option>
+                                    <option value="verde musgo">Verde Musgo</option>
+                                    <option value="azul celeste">Azul Celeste</option>
+                                </select>
                             </div>
                             <div className="w-full">
                                 <label className="font-bold">Comprimento(cm)</label>
@@ -523,7 +458,7 @@ function AdicionarProdutoPage(){
                                                     ...prev,
                                                     imagem: null
                                                 }));
-                                                // Reset do input file
+                                                
                                                 const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
                                                 if (fileInput) {
                                                     fileInput.value = '';
