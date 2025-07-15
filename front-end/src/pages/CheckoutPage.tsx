@@ -133,13 +133,39 @@ const CheckoutPage = () => {
 
       const response = await apiClient.post('api/pagamento/processar/', paymentData);
 
-      if (response.status === 200) {
-        setCompletedOrder({ items: cartItems, total: totalAmount });
-        setShowSuccessPopup(true);
-        clearCart();
-        resetForm();
+      console.log('Resposta do backend:', response.status, response.data); // Debug
+
+      // Verifica se o status é de sucesso (200-299) ou se há uma resposta de aprovação no conteúdo
+      if (response.status >= 200 && response.status < 300) {
+        // Verifica se a resposta contém informações de aprovação
+        const responseData = response.data;
+        const isApproved = responseData?.status === 'approved' || 
+                          (responseData?.message && responseData.message.toLowerCase().includes('aprovado')) ||
+                          responseData?.payment_status === 'approved' ||
+                          responseData?.success === true ||
+                          (!responseData?.error && !responseData?.message?.toLowerCase().includes('erro'));
+
+        console.log('isApproved:', isApproved, 'responseData:', responseData); // Debug
+
+        if (isApproved) {
+          setCompletedOrder({ items: cartItems, total: totalAmount });
+          setShowSuccessPopup(true);
+          clearCart();
+          resetForm();
+        } else {
+          setModalErrorData({ 
+            type: 'error', 
+            message: 'Erro no Pagamento', 
+            details: responseData?.message || responseData?.error || 'Ocorreu um erro no processamento do pagamento.' 
+          });
+          setShowErrorModal(true);
+        }
       } else {
-        setModalErrorData({ type: 'error', message: 'Erro no Pagamento', details: response.data?.message || 'Ocorreu um erro.' });
+        setModalErrorData({ 
+          type: 'error', 
+          message: 'Erro no Pagamento', 
+          details: response.data?.message || response.data?.error || 'Ocorreu um erro.' 
+        });
         setShowErrorModal(true);
       }
     } catch (error) {
