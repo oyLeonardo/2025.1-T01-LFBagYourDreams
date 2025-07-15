@@ -1,5 +1,6 @@
 """Modelos do banco de dados usados pelo aplicativo Django."""
 
+#from types import CellType
 from django.db import models
 
 class Carrinho(models.Model):   # pylint: disable=too-few-public-methods
@@ -14,7 +15,7 @@ class Carrinho(models.Model):   # pylint: disable=too-few-public-methods
 
 
     def __str__(self):
-        return f'Subtotal: {self.subtotal}'
+        return f'{self.id}'
 
 
 class Cor(models.Model):    # pylint: disable=too-few-public-methods
@@ -67,8 +68,10 @@ class Produto(models.Model):    # pylint: disable=too-few-public-methods
         db_table = 'produto'
         managed = False
 
+
 class ProdutoImagem(models.Model):
-    """classe que guarda a url das imagnes dos produtos"""
+    """Classe que guarda a url das imagnes dos produtos"""
+
     produto = models.ForeignKey(
         Produto,
         on_delete=models.CASCADE,
@@ -76,7 +79,9 @@ class ProdutoImagem(models.Model):
     )
     # TROCAMOS URLField POR ImageField
     # O 'upload_to' define a subpasta dentro do AWS_LOCATION ('media/')
-    url = models.URLField(default='https://tixunpfronrbfeswufuv.supabase.co/storage/v1/object/public/imagens-produtos/media/produtos/0a5dc12e-0203-4c98-bf56-3f0671e14902.jpg?')
+    url = models.URLField(default=
+                        'https://tixunpfronrbfeswufuv.supabase.co/storage/v1/object/public/'
+                        'imagens-produtos/media/produtos/0a5dc12e-0203-4c98-bf56-3f0671e14902.jpg?')
     criado_em = models.DateTimeField(auto_now_add=True)
 
     class Meta: # pylint: disable=too-few-public-methods
@@ -97,6 +102,7 @@ class ProdutoCarrinho(models.Model):    # pylint: disable=too-few-public-methods
         """Define que este modelo é apenas leitura (sem migrations)"""
         db_table = 'produto_carrinho'
         managed = False
+
 
 class Pedido(models.Model):
     """Representa um pedido realizado por um usuário."""
@@ -129,6 +135,7 @@ class Pedido(models.Model):
     status = models.CharField(max_length=50, default='pending')  # Ex: pending, approved, rejected
     frete = models.FloatField(blank=True, null=True)
     valor_total = models.FloatField(blank=True, null=True)
+
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

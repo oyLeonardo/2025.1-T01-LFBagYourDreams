@@ -2,27 +2,9 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useCart } from '../components/CartContext';
+import {type Produto} from '../types/produto';
+import { getCorClass } from '../utils/getCorClass';
 
-interface ImagemProduto {
-  id: number;
-  url: string;
-  criado_em: string;
-}
-
-interface Produto {
-  id: number;
-  titulo: string;
-  descricao: string;
-  categoria: string;
-  preco: number;
-  quantidade: number;
-  material: string;
-  cor_padrao: string;
-  altura: number | null;
-  comprimento: number | null;
-  largura: number | null;
-  imagens: ImagemProduto[];
-}
 
 function ProdutoPage() {
   const { id } = useParams();
@@ -85,45 +67,6 @@ function ProdutoPage() {
         setMostrarConfirmacao(false);
       }, 3000);
     }
-  };
-
-  const getCorClass = (corNome: string): string => {
-    const cores: Record<string, string> = {
-      'vermelho': 'bg-red-500',
-      'azul': 'bg-blue-500',
-      'verde': 'bg-green-500',
-      'amarelo': 'bg-yellow-400',
-      'preto': 'bg-black',
-      'branco': 'bg-white border border-gray-300',
-      'cinza': 'bg-gray-400',
-      'rosa': 'bg-pink-400',
-      'roxo': 'bg-purple-500',
-      'laranja': 'bg-orange-500',
-      'dourado': 'bg-amber-400',
-      'prata': 'bg-gray-300',
-      'verde militar': 'bg-green-800',
-      'vinho': 'bg-red-800',
-      'marrom': 'bg-amber-800',
-      'bege': 'bg-amber-100 border border-gray-300',
-      'turquesa': 'bg-cyan-400',
-      'azul marinho': 'bg-blue-800',
-      'coral': 'bg-orange-300',
-      'lilás': 'bg-purple-300',
-      'vermelho escuro': 'bg-red-700',
-      'verde claro': 'bg-green-300',
-      'azul claro': 'bg-blue-300',
-      'amarelo ouro': 'bg-yellow-500',
-      'grafite': 'bg-gray-600',
-      'caramelo': 'bg-amber-600',
-      'champagne': 'bg-amber-50 border border-gray-300',
-      'petróleo': 'bg-teal-700',
-      'salmão': 'bg-orange-200',
-      'vinho tinto': 'bg-red-900',
-      'verde musgo': 'bg-green-700',
-      'azul celeste': 'bg-blue-200',
-    };
-    
-    return cores[corNome.toLowerCase()] || 'bg-gray-200 border border-gray-300';
   };
 
   if (carregando) {
@@ -255,7 +198,7 @@ function ProdutoPage() {
                 <button
                   onClick={adicionarAoCarrinho}
                   disabled={produto.quantidade === 0 || quantidade > produto.quantidade}
-                  className={`w-full py-3 px-4 rounded-lg font-medium ${
+                  className={`w-full py-3 cursor-pointer px-4 rounded-lg font-medium ${
                     produto.quantidade === 0 || quantidade > produto.quantidade
                       ? 'bg-gray-400 cursor-not-allowed' 
                       : 'bg-green-900 text-white hover:bg-green-950'

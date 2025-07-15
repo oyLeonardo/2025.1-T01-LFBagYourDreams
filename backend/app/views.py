@@ -1,12 +1,24 @@
-from django.shortcuts import render, redirect
+"""Arquivo de definição das rotas da API"""
+
+import logging
+import json
+from datetime import datetime
+from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
-from django.views import View
+from django.db import transaction, DatabaseError
+from rest_framework import generics, filters, status
+from django.core.mail import send_mail, EmailMultiAlternatives
+from django.template.loader import render_to_string
+from rest_framework.views import APIView, View
+from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from django.urls import reverse
-from django.conf import settings
-from django.db import transaction, DatabaseError
+from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from django.conf import settings
+from django.core.mail import send_mail
 from .utils.supabase_utils import fetch_from_supabase, insert_to_supabase
 from .services.mercadopago_service import MercadoPagoService
 from . import models, serializers
@@ -27,28 +39,47 @@ import logging
 import uuid
 
 logger = logging.getLogger(__name__)
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 
 def home_view(request):
+    """Homepage de teste."""
     return HttpResponse("Bem-vindo à página inicial do backend!")
 
-def fetch_data_view(request):   # pylint: disable=unused-argument
-    
-    #View para buscar dados da Supabase e retornar como JSON.
-    
+
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """Serializer personalizado para incluir informações adicionais no token JWT."""
+    @classmethod
+    def get_token(cls, user):
+        """Retorna o token JWT com claims customizadas para o usuário."""
+        token = super().get_token(user)
+
+        # Add custom claims
+        token['is_staff'] = user.is_staff
+        token['is_superuser'] = user.is_superuser
+
+        return token
+
+class MyTokenObtainPairView(TokenObtainPairView):
+    """View personalizada para o token JWT."""
+    serializer_class = MyTokenObtainPairSerializer
+
+def fetch_data_view(request):
+    """Retorna dados do banco de dados."""
+
     data = fetch_from_supabase('')
     return JsonResponse(data, safe=False)
 
 
-def insert_data_view(request):  # pylint: disable=unused-argument
-    
-    #View para inserir dados na Supabase via POST.
-    
+def insert_data_view(request):
+    """Rota para inserir dados na Supabase via POST."""
+
     if request.method == 'POST':
         data = request.POST.dict()
         response = insert_to_supabase('', data)
         return JsonResponse(response, safe=False)
 
-    return HttpResponse(status=405)  # Método não permitido
+    return HttpResponse(status=405)
+
 
 class ProductList(generics.ListCreateAPIView):
     """
@@ -56,12 +87,13 @@ class ProductList(generics.ListCreateAPIView):
     """
     queryset = models.Produto.objects.all() # pylint: disable=no-member
     serializer_class = serializers.ProductListSerializer
-    #permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['categoria', 'material', 'cor_padrao']
-    search_fields = ['titulo', 'descricao']
+    search_fields = ['titulo', 'descricao', 'material', 'categoria', 'cor_padrao']
     ordering_fields = ['preco', 'quantidade']
-    ordering = ['preco']  # padrão
+    ordering = ['preco']
+
 
 class ProductDetail(generics.RetrieveUpdateDestroyAPIView):
     """
@@ -69,12 +101,81 @@ class ProductDetail(generics.RetrieveUpdateDestroyAPIView):
     """
     queryset = models.Produto.objects.all() # pylint: disable=no-member
     serializer_class = serializers.ProductDetailSerializer
-    #permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+logger = logging.getLogger(__name__)
+
+class OrderList(generics.ListAPIView):
+    """Classe que retorna uma lista de pedidos através do GET."""
+
+    queryset = models.Pedido.objects.all() # pylint: disable=no-member
+    serializer_class = serializers.OrderSerializer
+    permission_classes = [IsAuthenticated]
+
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+
+    filterset_fields = {
+        'created_at': ['date', 'lt', 'gt'],
+        'updated_at': ['date'],
+        'metodo_pagamento': ['exact'],
+        'status': ['exact']
+    }
+
+    ordering_fields = ['valor_total', 'created_at', 'updated_at']
+    ordering = ['valor_total']
+
+
+class OrderDetail(generics.RetrieveUpdateDestroyAPIView):
+    """Classe que permite o GET/POST/DELETE de pedidos individualmente."""
+
+    queryset = models.Pedido.objects.all() # pylint: disable=no-member
+    serializer_class = serializers.OrderSerializer
+    permission_classes = []
+
+    def update(self, request, *args, **kwargs):
+        """Atualiza o status de um pedido e envia um e-mail informando o usuário."""
+
+        instance = self.get_object()
+        old_status = instance.status
+
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        new_status = serializer.instance.status
+        email = serializer.instance.email_usuario
+
+        if old_status != new_status and email:
+            subject = f"Seu pedido #{instance.id} foi atualizado!"
+
+            context = {
+                'pedido_id': instance.id,
+                'novo_status': new_status,
+                'frete': instance.frete,
+                'valor_total': instance.valor_total,
+                'metodo_pagamento': instance.metodo_pagamento,
+            }
+
+            text_content = f"Seu pedido #{instance.id} foi atualizado para: {new_status}."
+            html_content = render_to_string("email/order_update.html", context)
+
+            email_message = EmailMultiAlternatives(
+                subject=subject,
+                body=text_content,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[email],
+            )
+            email_message.attach_alternative(html_content, "text/html")
+            email_message.send()
+
+        return Response(serializer.data)
+
 
 class ImageUploadView(APIView):
     """
     View para upload de imagens de produtos.
     """
+
     serializer_class = ProdutoImagemSerializer
 
     def post(self, request):
@@ -97,18 +198,26 @@ class ImageUploadView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
         except ClientError as e: # <<< MUDANÇA AQUI
-             # Erro específico do Boto3 (comunicação com S3/Supabase)
-             print("--------------------------------------------------")
-             print(">>> ERRO BOTOCORE (S3/SUPABASE) DETECTADO! <<<")
+            # Erro específico do Boto3 (comunicação com S3/Supabase)
+            print("--------------------------------------------------")
+            print(">>> ERRO BOTOCORE (S3/SUPABASE) DETECTADO! <<<")
 
-        except Exception as e:
+            return Response(
+                {'detail': f'Ocorreu um erro inesperado no servidor: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        except Exception as e: # broad-exception-caught
             # Pega qualquer outro erro inesperado que possa ter acontecido.
             print("--------------------------------------------------")
             print(">>> ERRO GENÉRICO DETECTADO! <<<")
             print(f"Tipo do Erro: {type(e)}")
             print(f"Mensagem: {e}")
             print("--------------------------------------------------")
-            return Response({'detail': f'Ocorreu um erro inesperado no servidor: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {'detail': f'Ocorreu um erro inesperado no servidor: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 @api_view(['POST'])
 @permission_classes([AllowAny])

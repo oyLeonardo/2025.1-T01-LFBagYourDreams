@@ -77,7 +77,7 @@ const Carrinho = () => {
           <div className="flex">
             <button
               type="button"
-              className="font-medium text-[#075336] hover:text-[#053c27]"
+              className="font-medium cursor-pointer text-[#075336] hover:text-[#053c27]"
               onClick={() => removerItem(item.id)}
             >
               Remover
@@ -114,7 +114,7 @@ const Carrinho = () => {
       </p>
       <div className="mt-6">
         <button
-          className="w-full rounded-md border border-transparent bg-[#075336] px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-[#053c27] transition-colors"
+          className="w-full rounded-md border cursor-pointer border-transparent bg-[#075336] px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-[#053c27] transition-colors"
           onClick={finalizarCompra}
         >
           Finalizar Compra
@@ -125,7 +125,7 @@ const Carrinho = () => {
           ou{' '}
           <button
             type="button"
-            className="font-medium text-[#075336] hover:text-[#053c27]"
+            className="font-medium cursor-pointer text-[#075336] hover:text-[#053c27]"
             onClick={() => setIsOpen(false)}
           >
             Continuar Comprando
@@ -140,7 +140,7 @@ const Carrinho = () => {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="relative p-2 rounded-full hover:bg-[#075336]/10 transition-colors"
+        className="relative cursor-pointer p-2 rounded-full hover:bg-[#075336]/10 transition-colors"
       >
         <ShoppingCartIcon className="h-6 w-6 text-[#075336]" />
         {cartCount > 0 && (

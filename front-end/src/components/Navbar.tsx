@@ -1,10 +1,13 @@
-import { NavLink } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { useDebounce } from 'use-debounce';
 import CartDrawer from './Carrinho';
 
 const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearch] = useDebounce(searchTerm, 500);
+    const navigate = useNavigate();
 
     const navLinks = [
         { name: 'Home', path: '/' },
@@ -14,26 +17,29 @@ const Navbar = () => {
         { name: 'Termicas', path: '/categoria/termicas' },
     ];
 
-    const UserIcon = () => (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-        </svg>
-    );
+    // const UserIcon = () => (
+    //     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    //         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+    //     </svg>
+    // );
+
+    useEffect(() => {
+        if (debouncedSearch.trim()) {
+            navigate(`/produtos/search?search=${encodeURIComponent(debouncedSearch.trim())}`);
+        }
+    }, [debouncedSearch, navigate]);
 
     return (
         <>
-            {/* Top Bar - Fundo branco com logo verde */}
             <div className="bg-white shadow-sm">
                 <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
                     <div className="flex justify-between items-center h-16">
-                        {/* Logo com espessura reduzida (font-bold) e alinhada à esquerda */}
                         <div className="flex-shrink-0 flex items-center ml-0">
-                            <div className="text-[#075336] font-['Playfair_Display'] font-bold text-2xl select-none">
+                            <NavLink to='/' className="text-[#075336] font-['Playfair_Display'] font-bold text-2xl select-none">
                                 LF Bag Your Dreams
-                            </div>
+                            </NavLink>
                         </div>
 
-                        {/* Barra de Busca (Central) - Visível apenas em desktop */}
                         <div className="hidden md:flex flex-1 max-w-2xl mx-6">
                             <div className="relative w-full">
                                 <input
@@ -43,7 +49,14 @@ const Navbar = () => {
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
-                                <button className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                                <button 
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+                                    onClick={() => {
+                                        if (searchTerm.trim()) {
+                                            navigate(`/produtos/search?search=${encodeURIComponent(searchTerm.trim())}`);
+                                        }
+                                    }}
+                                >
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                     </svg>
@@ -51,31 +64,28 @@ const Navbar = () => {
                             </div>
                         </div>
 
-                        {/* Ícones e Admin (Desktop) */}
                         <div className="hidden md:flex md:items-center md:space-x-4">
-                            <NavLink 
-                                to="/conta" 
-                                className="text-gray-700 hover:text-[#075336] p-2"
-                            >
+                            {/* <NavLink to="/conta" className="text-gray-700 hover:text-[#075336] p-2">
                                 <UserIcon />
-                            </NavLink>
+                            </NavLink> */}
 
-                        <div className="ml-1">
-                            <CartDrawer />
-                        </div>
+                            <div className="ml-1">
+                                <CartDrawer />
+                            </div>
 
-                        <NavLink
-                            to="/admin"
-                            className="px-3 py-1.5 bg-[#075336] text-white rounded-md hover:bg-[#053c27] transition-colors text-sm font-medium"
-                        >
+                            {/* <NavLink
+                                to="/admin"
+                                className="px-3 py-1.5 bg-[#075336] text-white rounded-md hover:bg-[#053c27] transition-colors text-sm font-medium"
+                            >
                                 Admin
-                            </NavLink>
+                            </NavLink> */}
                         </div>
 
-                        {/* Mobile menu button */}
                         <div className="flex md:hidden items-center">
-                            {/* Ícone de busca mobile */}
-                            <button className="mr-3 text-gray-700 hover:text-[#075336]">
+                            <button 
+                                className="mr-3 text-gray-700 hover:text-[#075336]"
+                                onClick={() => setIsMenuOpen(true)}
+                            >
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
@@ -109,7 +119,6 @@ const Navbar = () => {
                 </div>
             </div>
 
-            {/* Navbar Separado - Fundo branco com letras pretas */}
             <nav className="bg-white shadow-md">
                 <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
                     <div className="hidden md:flex justify-center space-x-10">
@@ -133,11 +142,9 @@ const Navbar = () => {
                 </div>
             </nav>
 
-            {/* Menu Mobile */}
             {isMenuOpen && (
                 <div className="md:hidden bg-white shadow-inner">
                     <div className="px-2 pt-2 pb-3 space-y-1">
-                        {/* Barra de busca mobile no menu */}
                         <div className="px-2 py-2">
                             <div className="relative">
                                 <input
@@ -147,7 +154,15 @@ const Navbar = () => {
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
-                                <button className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                                <button 
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+                                    onClick={() => {
+                                        if (searchTerm.trim()) {
+                                            navigate(`/produtos/search?search=${encodeURIComponent(searchTerm.trim())}`);
+                                            setIsMenuOpen(false);
+                                        }
+                                    }}
+                                >
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                     </svg>

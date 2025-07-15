@@ -6,32 +6,40 @@ import {
 } from '@tanstack/react-table';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import apiClient from '../api'; 
 
 interface Pedido {
   id: number;
+  email_usuario: string;
   status: string;
   valor_total: number;
+  cep: string;
+  bairro: string;
+  estado: string;
+  cidade: string;
+  numero: string;
+  metodo_pagamento: string;
   frete: number;
-  criado_em: string;
 }
 
 const columnHelper = createColumnHelper<Pedido>();
 
 const columns = [
+  columnHelper.accessor('id', {
+    cell: (info) => info.getValue(),
+    header: 'Id',
+  }),
+  columnHelper.accessor('email_usuario', {
+    cell: (info) => info.getValue(),
+    header: 'Email do Usuário',
+  }),
   columnHelper.accessor('status', {
     cell: (info) => info.getValue(),
     header: 'Status',
   }),
   columnHelper.accessor('valor_total', {
-    cell: (info) => `R$ ${info.getValue().toFixed(2)}`,
+    cell: (info) => `R$ ${Number(info.getValue()).toFixed(2)}`,
     header: 'Valor Total',
-  }),
-  columnHelper.accessor('frete', {
-    header: 'Frete',
-    cell: (info) => `R$ ${info.getValue().toFixed(2)}`,
-  }),
-  columnHelper.accessor('criado_em', {
-    header: 'Criado Em',
   }),
 ];
 
@@ -43,37 +51,27 @@ function TabelaPedidos() {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   
-  const API_URL = 'http://localhost:8000/api/orders/';
-    
-    useEffect(() => {
-      fetchData(API_URL);
-    }, []);
-    
-    function fetchData(baseUrl: string) {
-      setCarregando(true);
-      setErro(null);
-      
-      fetch(baseUrl)
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error(`Erro HTTP: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then((data) => {
-          setPedidos(data);
-        })
-        .catch((error) => {
-          console.error('Erro ao buscar pedidos:', error);
-          setErro('Não foi possível carregar os pedidos. Tente novamente mais tarde.');
-        })
-        .finally(() => {
-          setCarregando(false);
-        });
+  const fetchData = async () => {
+    setCarregando(true);
+    setErro(null);
+    try {
+      const response = await apiClient.get('/orders/'); 
+      setPedidos(response.data.results || response.data); 
+    } catch (error) {
+      console.error('Erro ao buscar pedidos:', error);
+      setErro('Não foi possível carregar os pedidos. Verifique se você está logado.');
+    } finally {
+      setCarregando(false);
     }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []); 
 
   const handleRowClick = (pedido: Pedido) => {
-    navigate(`/pedido/${pedido.id}`);
+    navigate(`/admin/pedido/${pedido.id}`);
+    console.log("Pedido clicado:", pedido);
   };
 
   const paginatedData = useMemo(() => {
@@ -90,6 +88,7 @@ function TabelaPedidos() {
 
   const totalPages = Math.ceil(pedidos.length / pageSize);
 
+
   if (carregando) {
     return (
       <div className="p-7 bg-[#f3f3f3] rounded-xl shadow-sm max-w-5xl mx-auto mt-10">
@@ -100,21 +99,21 @@ function TabelaPedidos() {
     );
   }
 
-  if (erro) {
-    return (
-      <div className="p-7 bg-[#f3f3f3] rounded-xl shadow-sm max-w-5xl mx-auto mt-10">
-        <div className="flex flex-col justify-center items-center h-64">
-          <div className="text-lg text-red-600 mb-4">{erro}</div>
-          <button 
-            onClick={() => fetchData(API_URL)}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            Tentar novamente
-          </button>
-        </div>
+ if (erro) {
+  return (
+    <div className="p-7 bg-[#f3f3f3] rounded-xl shadow-sm max-w-5xl mx-auto mt-10">
+      <div className="flex flex-col justify-center items-center h-64">
+        <div className="text-lg text-red-600 mb-4">{erro}</div>
+        <button 
+          onClick={fetchData}  
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Tentar novamente
+        </button>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   return (
     <div className="p-7 bg-[#f3f3f3] rounded-xl shadow-sm max-w-5xl mx-auto mt-10">
