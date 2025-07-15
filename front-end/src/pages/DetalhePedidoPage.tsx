@@ -61,6 +61,8 @@ function DetalhePedidoPage() {
             const response = await apiClient.get<Pedido>(`/order/${pedidoId}/`);
             setPedido(response.data);
 
+            console.log("Dados recebidos do backend:", response.data);
+
             setFormData({
                 id: response.data.id.toString(),
                 email_usuario: response.data.email_usuario,

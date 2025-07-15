@@ -36,20 +36,68 @@ class ProdutoCarrinhoSerializer(serializers.ModelSerializer):
         model = ProdutoCarrinho
         fields = '__all__'
 
-class OrderSerializer(serializers.ModelSerializer):
-    """Serializer para o modelo Pedido."""
+class ProdutoParaPedidoSerializer(serializers.ModelSerializer):
+    """
+    Um serializer simples que define quais campos do Produto
+    queremos mostrar na página de detalhes do pedido.
+    """
+    # Usamos um SerializerMethodField para pegar a URL da primeira imagem
+    imagem_url = serializers.SerializerMethodField()
 
     class Meta:
-        """Metadados do OrderSerializer."""
+        model = Produto
+        fields = ['id', 'titulo', 'imagem_url']
 
+    def get_imagem_url(self, obj):
+        # Pega a primeira imagem associada a este produto
+        primeira_imagem = obj.imagens.first()
+        if primeira_imagem:
+            return primeira_imagem.url
+        return None # Ou uma URL de imagem padrão
+
+class ItensDoPedidoSerializer(serializers.ModelSerializer):
+    """
+    Este serializer representa um item dentro do carrinho,
+    combinando o produto (usando o serializer acima) e a quantidade.
+    """
+    produto = ProdutoParaPedidoSerializer(source='id_produto', read_only=True)
+
+    class Meta:
+        model = ProdutoCarrinho
+        # Adicione 'quantidade' se você tiver esse campo no modelo ProdutoCarrinho
+        # Por enquanto, vamos assumir que não, mas você pode adicionar depois.
+        # fields = ['produto', 'quantidade']
+        fields = ['produto']
+
+class OrderSerializer(serializers.ModelSerializer):
+    """ Serializer para o Pedido, agora com a lista de produtos de forma segura. """
+
+    # MUDANÇA: Trocamos a declaração direta por um SerializerMethodField.
+    # Isso nos permite definir uma função customizada para obter os dados.
+    produtos_do_carrinho = serializers.SerializerMethodField()
+
+    class Meta:
         model = Pedido
         fields = [
-            'id', 'email_usuario', 'codigo_carrinho', 'cep', 'bairro',
+            'id', 'email_usuario', 'status', 'valor_total', 'cep', 'bairro',
             'estado', 'cidade', 'numero', 'metodo_pagamento', 'frete',
-            'valor_total', 'status'
+            'produtos_do_carrinho'
         ]
 
-        read_only_fields = ['id', 'codigo_carrinho']
+    def get_produtos_do_carrinho(self, obj):
+        """
+        Este método é chamado para cada pedido para preencher o campo 'produtos_do_carrinho'.
+        'obj' aqui é a instância do Pedido.
+        """
+        # Verificamos se o pedido realmente tem um carrinho associado
+        if obj.codigo_carrinho:
+            # Se tiver, buscamos os itens do carrinho...
+            itens_carrinho = obj.codigo_carrinho.produtocarrinho_set.all()
+            # ...e usamos o serializer que já criamos para formatá-los.
+            return ItensDoPedidoSerializer(itens_carrinho, many=True).data
+        
+        # Se o pedido não tiver um carrinho, retornamos uma lista vazia em vez de quebrar.
+        return []
 
     def validate_cep(self, value):
         """O cep tem exatamente 8 dígitos e 1 hífen"""

@@ -120,6 +120,11 @@ const CheckoutPage = () => {
         payment_method_id: (CardPaymentFormRef.current?.getPaymentMethodId() || ''),
         payer: { email: email, identification: { type: identificationType, number: identificationNumber }, first_name: nome.split(' ')[0], last_name: nome.split(' ').slice(1).join(' ') || '' },
         shipping_address: { zip_code: cep.replace(/\D/g, ''), street_name: endereco, street_number: numero, neighborhood: '', city: cidade, federal_unit: estado },
+
+        cart_items: cartItems.map(item => ({
+            product_id: item.id,
+            quantity: item.quantidade
+        }))
       };
 
       const response = await fetch('http://127.0.0.1:8000/api/pagamento/processar/', {

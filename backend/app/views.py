@@ -23,13 +23,14 @@ from .utils.supabase_utils import fetch_from_supabase, insert_to_supabase
 from .services.mercadopago_service import MercadoPagoService
 from . import models, serializers
 from .models import Carrinho, Cor, Personalizacao, Produto, ProdutoCarrinho, Pedido
-from .serializers import CarrinhoSerializer, CorSerializer, PersonalizacaoSerializer, ProdutoSerializer, ProdutoCarrinhoSerializer, PedidoSerializer, ProdutoImagemSerializer
+from .serializers import CarrinhoSerializer, CorSerializer, PersonalizacaoSerializer, ProdutoSerializer, ProdutoCarrinhoSerializer, OrderSerializer, ProdutoImagemSerializer
 from datetime import datetime
 from rest_framework import generics, permissions, filters, status
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
 from rest_framework.response import Response
+from rest_framework.generics import DestroyAPIView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from botocore.exceptions import ClientError
@@ -218,6 +219,14 @@ class ImageUploadView(APIView):
                 {'detail': f'Ocorreu um erro inesperado no servidor: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+class ImagemProdutoDeleteView(DestroyAPIView):
+    """
+    View para deletar uma imagem de produto.
+    """
+    queryset = models.ProdutoImagem.objects.all()  # Certifique-se que esse model existe
+    serializer_class = ProdutoImagemSerializer
+    permission_classes = [IsAuthenticated]
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
