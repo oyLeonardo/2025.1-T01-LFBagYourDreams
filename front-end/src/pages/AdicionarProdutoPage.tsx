@@ -220,8 +220,8 @@ function AdicionarProdutoPage(){
         }
         
         const url = isEditMode 
-            ? `/product/${produtoId}/` // URL para atualizar
-            : '/products/';               // URL para criar
+            ? `api/product/${produtoId}/` // URL para atualizar
+            : 'api/products/';               // URL para criar
             
         const metodo = isEditMode ? 'put' : 'post'; 
 
