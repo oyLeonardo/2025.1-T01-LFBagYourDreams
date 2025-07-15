@@ -106,7 +106,7 @@ class ProdutoCarrinho(models.Model):    # pylint: disable=too-few-public-methods
 
 class Pedido(models.Model):
     """Representa um pedido realizado por um usuário."""
-
+    nome_usuario = models.TextField(max_length=255, blank=True, null=True)
     email_usuario = models.TextField(max_length=255, blank=True, null=True)
 
     codigo_carrinho = models.ForeignKey(
@@ -124,16 +124,29 @@ class Pedido(models.Model):
     quadra = models.TextField(max_length=255, blank=True, null=True)
 
     metodo_pagamento = models.TextField(max_length=255, blank=True, null=True)
-    mercadopago_payment_id = models.CharField(max_length=255, blank=True, null=True)
+    mercadopago_payment_id = models.CharField(
+        max_length=255, 
+        blank=True, 
+        null=True, 
+        unique=True, 
+        help_text="ID do pagamento gerado pelo Mercado Pago."
+    )
 
     status = models.CharField(max_length=50, default='pending')  # Ex: pending, approved, rejected
     frete = models.FloatField(blank=True, null=True)
     valor_total = models.FloatField(blank=True, null=True)
 
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    external_reference = models.CharField(max_length=255, unique=True, null=True, blank=True)
+    external_reference = models.CharField(
+        max_length=255, 
+        blank=True, 
+        null=True, 
+        db_index=True, 
+        help_text="Referência externa do pedido enviada ao Mercado Pago."
+    )
 
     def __str__(self):
         return f"Pedido {self.id} - Status: {self.status}" # pylint: disable=no-member

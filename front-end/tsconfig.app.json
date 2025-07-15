@@ -21,7 +21,10 @@
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+
+    "typeRoots": ["./node_modules/@types", "./src/types"],
+    "types": ["vite/client"],
   },
   "include": ["src"]
 }
