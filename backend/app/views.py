@@ -47,6 +47,33 @@ def home_view(request):
     return HttpResponse("Bem-vindo à página inicial do backend!")
 
 
+class CreateCartView(APIView):
+    """
+    View para criar um novo carrinho de compras vazio.
+    Não requer autenticação, pois um visitante pode iniciar um carrinho.
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        """
+        Lida com requisições POST para criar um novo carrinho.
+        """
+        try:
+            # Simplesmente cria uma nova instância de Carrinho
+            novo_carrinho = Carrinho.objects.create()
+            
+            # Retorna o ID do carrinho recém-criado
+            return Response({'id': novo_carrinho.id}, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            # Em caso de erro de banco de dados ou outro
+            logger.error(f"Erro ao criar novo carrinho: {e}")
+            return Response(
+                {'error': 'Não foi possível criar um novo carrinho.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     """Serializer personalizado para incluir informações adicionais no token JWT."""
     @classmethod
@@ -228,6 +255,7 @@ class ImagemProdutoDeleteView(DestroyAPIView):
     serializer_class = ProdutoImagemSerializer
     permission_classes = [IsAuthenticated]
 
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 @csrf_exempt
@@ -237,7 +265,7 @@ def process_payment(request):
 
     try:
         data = json.loads(request.body)
-        logger.info("Dados recebidos no backend: %s", data)
+        logger.info("Dados recebidos no backend para processamento: %s", data)
 
         # --- 1. Extração de Dados ---
         token = data.get('token')
@@ -245,9 +273,9 @@ def process_payment(request):
         installments = data.get('installments')
         transaction_amount = data.get('transaction_amount')
         description = data.get('description')
+        cart_items = data.get('cart_items', [])
 
         payer_data = data.get('payer', {})
-        # CORREÇÃO: Lendo todos os dados do pagador a partir do objeto 'payer_data'
         payer_email = payer_data.get('email')
         payer_first_name = payer_data.get('first_name')
         payer_last_name = payer_data.get('last_name')
@@ -262,22 +290,25 @@ def process_payment(request):
         shipping_street_number = shipping_address_data.get('street_number')
         shipping_city = shipping_address_data.get('city')
         shipping_federal_unit = shipping_address_data.get('federal_unit')
+        shipping_neighborhood = shipping_address_data.get('neighborhood', '')
 
-        # --- Validação ---
-        if not all([token, payment_method_id, installments, transaction_amount, payer_email]):
-            logger.warning("Validação falhou: Dados incompletos. %s", data)
+        # --- Validação Essencial ---
+        if not all([token, payment_method_id, installments, transaction_amount, payer_email]) or not cart_items:
+            logger.warning("Validação falhou: Dados de pagamento ou itens do carrinho estão incompletos.")
             return Response({"message": "Dados incompletos para processar o pagamento"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # --- 2. Criação do Pedido e Preparação para o MP ---
+        # --- 2. Criação do Pedido e Itens (Transação Atómica) ---
         with transaction.atomic():
-            # CORREÇÃO: Lógica para criar o pedido no banco de dados
-            temp_cart = Carrinho.objects.create(subtotal=float(transaction_amount))
+            # PASSO A: Crie um carrinho que será ligado exclusivamente a este pedido.
+            carrinho_para_o_pedido = Carrinho.objects.create(subtotal=float(transaction_amount))
+
+            # PASSO B: Crie o Pedido e ligue-o ao carrinho recém-criado.
             novo_pedido = Pedido.objects.create(
                 nome_usuario=f"{payer_first_name} {payer_last_name}".strip(),
                 email_usuario=payer_email,
-                codigo_carrinho=temp_cart,
+                codigo_carrinho=carrinho_para_o_pedido,
                 cep=shipping_zip_code,
-                bairro=shipping_address_data.get('neighborhood', ''),
+                bairro=shipping_neighborhood,
                 cidade=shipping_city,
                 estado=shipping_federal_unit,
                 numero=shipping_street_number,
@@ -285,12 +316,23 @@ def process_payment(request):
                 metodo_pagamento=payment_method_id,
                 status='pendente',
                 valor_total=float(transaction_amount)
+                # Adicione o campo de frete se ele for enviado pelo frontend
             )
             order_id = str(novo_pedido.id)
-            
-            # CORREÇÃO: Criando o objeto request_options
-            request_options = mercadopago.config.RequestOptions()
-            request_options.custom_headers = { 'x-idempotency-key': str(uuid.uuid4()) }
+
+            # PASSO C: Percorra os itens recebidos e salve-os no banco de dados.
+            for item_data in cart_items:
+                try:
+                    produto = Produto.objects.get(id=item_data.get('product_id'))
+                    
+                    # AGORA ESTA LINHA VAI FUNCIONAR CORRETAMENTE
+                    ProdutoCarrinho.objects.create(
+                        id_carrinho=carrinho_para_o_pedido,
+                        id_produto=produto,
+                        quantidade=item_data.get('quantity')
+                    )
+                except Produto.DoesNotExist:
+                    raise Exception(f"Produto inválido no carrinho com ID {item_data.get('product_id')}.")
 
             # --- 3. Envio para o Mercado Pago ---
             sdk = mercadopago.SDK(settings.MERCADOPAGO_ACCESS_TOKEN)
@@ -308,41 +350,34 @@ def process_payment(request):
                     "identification": { "type": identification_type, "number": identification_number }
                 }
             }
-
-            logger.info("Enviando para Mercado Pago...")
+            request_options = mercadopago.config.RequestOptions(custom_headers={'x-idempotency-key': str(uuid.uuid4())})
             payment_response = sdk.payment().create(payment_data, request_options)
-            logger.info("Resposta completa do Mercado Pago: %s", payment_response)
 
             if "response" not in payment_response or payment_response.get("status") >= 400:
-                error_details = payment_response.get("response", {})
-                logger.error("Erro da API do Mercado Pago para o pedido %s: %s", order_id, error_details)
-                novo_pedido.status = 'falha_mp'
-                novo_pedido.save()
-                return Response({"message": "Gateway de pagamento retornou um erro.", "details": error_details}, status=status.HTTP_400_BAD_REQUEST)
+                # Se o pagamento falhar, a transação do banco de dados é revertida
+                raise Exception(f"Erro do Mercado Pago: {payment_response.get('response', {})}")
             
-            # --- 4. Atualização do Status do Pedido ---
+            # --- 4. Atualização Final do Status do Pedido ---
             response_body = payment_response["response"]
             mp_status = response_body.get("status")
-            mp_status_detail = response_body.get("status_detail")
             mp_payment_id = response_body.get("id")
-
-            logger.info("MP Status: %s, Detail: %s, Payment ID: %s", mp_status, mp_status_detail, mp_payment_id)
 
             if mp_status == 'approved':
                 novo_pedido.status = 'aprovado'
-            elif mp_status == 'pending' or mp_status == 'in_process':
+            elif mp_status in ['pending', 'in_process']:
                 novo_pedido.status = 'pendente_mp'
             else:
                 novo_pedido.status = 'rejeitado'
-
+            
             novo_pedido.mercadopago_payment_id = mp_payment_id
             novo_pedido.save()
 
-            # --- 5. Resposta ao Frontend ---
-            if novo_pedido.status == 'aprovado':
-                return Response({"message": "Pagamento aprovado!", "payment_id": mp_payment_id, "order_id": order_id}, status=status.HTTP_201_CREATED)
-            else:
-                return Response({"message": "Pagamento não aprovado", "mp_status_detail": mp_status_detail}, status=status.HTTP_400_BAD_REQUEST)
+            # --- 5. Resposta de Sucesso ao Frontend ---
+            return Response({
+                "message": "Pagamento processado com sucesso!",
+                "order_id": order_id,
+                "payment_status": novo_pedido.status
+            }, status=status.HTTP_201_CREATED)
 
     except json.JSONDecodeError:
         logger.error("Erro de decodificação JSON no corpo da requisição.")

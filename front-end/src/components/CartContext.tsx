@@ -1,8 +1,10 @@
-/* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import  { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import apiClient from '../api'; // Ajuste o caminho para o seu apiClient se necessário
+
+// --- Interfaces ---
 
 export interface CartItem {
-  id: number;
+  id: number | string;
   titulo: string;
   preco: number;
   quantidade: number;
@@ -11,82 +13,138 @@ export interface CartItem {
 }
 
 interface CartContextType {
+  cartId: number | null;
   cartItems: CartItem[];
-  addToCart: (item: CartItem) => void;
-  removeFromCart: (id: number) => void;
-  updateQuantity: (id: number, quantidade: number) => void;
-  clearCart: () => void;
   cartCount: number;
+  addToCart: (item: CartItem) => void;
+  removeFromCart: (itemId: number | string) => void;
+  updateQuantity: (itemId: number | string, quantidade: number) => void;
+  clearCart: () => void;
 }
+
+
+// --- Criação do Contexto ---
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-export const CartProvider = ({ children }: { children: ReactNode }) => {
-  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
-    const savedCart = localStorage.getItem('cart');
-    return savedCart ? JSON.parse(savedCart) : [];
-  });
 
+// --- Componente Provider ---
+
+export const CartProvider = ({ children }: { children: ReactNode }) => {
+  const [cartId, setCartId] = useState<number | null>(null);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [cartCount, setCartCount] = useState(0);
 
+  // Efeito para inicializar o carrinho (obter ID) ao carregar a aplicação
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cartItems));
-    setCartCount(cartItems.reduce((total, item) => total + item.quantidade, 0));
+    const initializeCart = async () => {
+      const savedCartId = localStorage.getItem('cartId');
+
+      if (savedCartId) {
+        const parsedCartId = JSON.parse(savedCartId);
+        setCartId(parsedCartId);
+        console.log(`Carrinho recuperado do localStorage. ID: ${parsedCartId}`);
+        // Opcional: Você pode buscar os itens deste carrinho aqui para sincronizar o estado
+        // Ex: fetchCartItems(parsedCartId);
+      } else {
+        console.log("Nenhum ID de carrinho encontrado, criando um novo no backend...");
+        try {
+          // Usa a rota /api/carrinhos/criar/ que criámos no backend
+          const response = await apiClient.post('/api/carrinhos/criar/');
+          const newCartId = response.data.id;
+
+          if (newCartId) {
+            setCartId(newCartId);
+            localStorage.setItem('cartId', JSON.stringify(newCartId));
+            console.log(`Novo carrinho criado com sucesso no backend! ID: ${newCartId}`);
+          }
+        } catch (error) {
+          console.error("Falha catastrófica ao criar um novo carrinho no backend:", error);
+        }
+      }
+    };
+
+    initializeCart();
+  }, []); // O array vazio [] garante que isto só executa uma vez
+
+  // Efeito para atualizar a contagem total de itens
+  useEffect(() => {
+    const totalItems = cartItems.reduce((sum, item) => sum + item.quantidade, 0);
+    setCartCount(totalItems);
   }, [cartItems]);
 
-  const addToCart = (item: CartItem) => {
+
+  // --- Funções de Manipulação do Carrinho ---
+  // NOTA: Estas funções devem ser atualizadas para fazer chamadas à API
+  // e manter o carrinho do backend sincronizado.
+
+  const addToCart = (itemToAdd: CartItem) => {
+    // TODO: Fazer chamada à API (ex: POST /api/carts/{cartId}/items/) para adicionar o item no backend
+    // e depois usar a resposta para atualizar o estado `setCartItems`.
+    
+    // Lógica temporária para a UI funcionar:
     setCartItems(prevItems => {
-      const existingItem = prevItems.find(prevItem => prevItem.id === item.id);
-      
+      const existingItem = prevItems.find(item => item.id === itemToAdd.id);
       if (existingItem) {
-        return prevItems.map(prevItem =>
-          prevItem.id === item.id 
-            ? { ...prevItem, quantidade: prevItem.quantidade + item.quantidade } 
-            : prevItem
+        return prevItems.map(item =>
+          item.id === itemToAdd.id
+            ? { ...item, quantidade: item.quantidade + itemToAdd.quantidade }
+            : item
         );
-      } else {
-        return [...prevItems, item];
       }
+      return [...prevItems, itemToAdd];
     });
+    console.log("Adicionando item (lógica de UI):", itemToAdd);
   };
 
-  const removeFromCart = (id: number) => {
-    setCartItems(prevItems => prevItems.filter(item => item.id !== id));
+  const removeFromCart = (itemId: number | string) => {
+    // TODO: Fazer chamada à API (ex: DELETE /api/carts/{cartId}/items/{itemId}/)
+    setCartItems(prevItems => prevItems.filter(item => item.id !== itemId));
   };
 
-  const updateQuantity = (id: number, quantidade: number) => {
+  const updateQuantity = (itemId: number | string, quantidade: number) => {
+    // TODO: Fazer chamada à API (ex: PUT /api/carts/{cartId}/items/{itemId}/)
     if (quantidade <= 0) {
-      removeFromCart(id);
+      removeFromCart(itemId);
       return;
     }
-
     setCartItems(prevItems =>
-      prevItems.map(item => (item.id === id ? { ...item, quantidade } : item))
+      prevItems.map(item =>
+        item.id === itemId ? { ...item, quantidade } : item
+      )
     );
   };
 
   const clearCart = () => {
+    // TODO: Fazer chamada à API (ex: POST /api/carts/{cartId}/clear/)
     setCartItems([]);
   };
 
+  // Valor que será fornecido pelo Contexto
+  const contextValue = {
+    cartId,
+    cartItems,
+    cartCount,
+    addToCart,
+    removeFromCart,
+    updateQuantity,
+    clearCart,
+  };
+
   return (
-    <CartContext.Provider value={{ 
-      cartItems, 
-      addToCart, 
-      removeFromCart, 
-      updateQuantity, 
-      clearCart,
-      cartCount
-    }}>
+    <CartContext.Provider value={contextValue}>
       {children}
     </CartContext.Provider>
   );
 };
 
-export const useCart = () => {
+
+// --- Hook Customizado ---
+
+export const useCart = (): CartContextType => {
   const context = useContext(CartContext);
   if (context === undefined) {
-    throw new Error('useCart must be used within a CartProvider');
+    throw new Error('useCart deve ser usado dentro de um CartProvider');
   }
   return context;
 };
