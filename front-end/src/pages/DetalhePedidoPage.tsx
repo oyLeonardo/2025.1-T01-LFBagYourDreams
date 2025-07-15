@@ -18,6 +18,10 @@ interface Pedido {
   send_mail: string;
 }
 
+function formatarCEP(cep: string): string {
+  return cep.replace(/^(\d{5})(\d{3})$/, "$1-$2");
+}
+
 function DetalhePedidoPage() {
     const { pedidoId } = useParams<{ pedidoId: string }>();
     const navigate = useNavigate();
@@ -48,7 +52,7 @@ function DetalhePedidoPage() {
     };
 
     const handleEditCancel = () => {
-    setEditModal(false); 
+    setEditModal(false);
     };
 
     const fetchPedido = async () => {
@@ -56,13 +60,13 @@ function DetalhePedidoPage() {
         try {
             const response = await apiClient.get<Pedido>(`/order/${pedidoId}/`);
             setPedido(response.data);
-            
+
             setFormData({
                 id: response.data.id.toString(),
                 email_usuario: response.data.email_usuario,
                 status: response.data.status,
                 valor_total: response.data.valor_total,
-                cep: response.data.cep,
+                cep: formatarCEP(response.data.cep),
                 bairro: response.data.bairro,
                 estado: response.data.estado,
                 cidade: response.data.cidade,
@@ -73,7 +77,7 @@ function DetalhePedidoPage() {
             });
         } catch (error) {
             console.error('Erro ao buscar pedido:', error);
-            setPedido(null); 
+            setPedido(null);
         } finally {
             setCarregando(false);
         }
@@ -84,14 +88,14 @@ function DetalhePedidoPage() {
         setCarregando(true);
         try {
             await apiClient.put(`/order/${pedidoId}/`, formData);
-            
+
             await fetchPedido();
-            
+
             setAlerta({
                 mensagem: 'Pedido atualizado com sucesso!',
                 tipo: 'success',
             });
-            
+
             console.log('Pedido atualizado com sucesso!');
         } catch (error) {
             console.error('Erro ao atualizar pedido:', error);
@@ -129,9 +133,9 @@ function DetalhePedidoPage() {
                 <p className="text-sm text-gray-500 mb-4">
                     ID da URL: {pedidoId}
                 </p>
-                <Button 
-                    name="Voltar" 
-                    color="green" 
+                <Button
+                    name="Voltar"
+                    color="green"
                     onClick={() => navigate('/admin/pedidos')}
                 />
             </div>
@@ -141,8 +145,8 @@ function DetalhePedidoPage() {
   return (
     <>
     {alerta && (
-        <Alertas 
-            mensagem={alerta.mensagem} 
+        <Alertas
+            mensagem={alerta.mensagem}
             tipo={alerta.tipo}
             onClose={() => setAlerta(null)}
         />
@@ -166,20 +170,20 @@ function DetalhePedidoPage() {
                             <option value="processando">Processando</option>
                             <option value="enviado">Enviado</option>
                             <option value="entregue">Entregue</option>
-                            </select> 
+                            </select>
                         <div className="flex gap-4 justify-center">
-                            <Button 
-                                name="Cancelar" 
-                                color="blue" 
+                            <Button
+                                name="Cancelar"
+                                color="blue"
                                 onClick={handleEditCancel}
                             />
-                            <Button 
+                            <Button
                                 type='submit'
-                                name="Confirmar" 
-                                color="bggreen" 
+                                name="Confirmar"
+                                color="bggreen"
                                 onClick={handleEditConfirm}
                             />
-                            
+
                         </div>
                         </form>
                     </div>
@@ -187,14 +191,14 @@ function DetalhePedidoPage() {
             </div>
         )}
 
-        
+
 
 
     <div className="container mx-auto p-6">
             <div className="mb-6">
-                <Button 
-                    name="← Voltar" 
-                    color="bggreen" 
+                <Button
+                    name="← Voltar"
+                    color="bggreen"
                     onClick={() => navigate('/admin/pedidos')}
                 />
             </div>
@@ -207,9 +211,9 @@ function DetalhePedidoPage() {
                             Pedido #{pedido?.id}
                         </h1>
                         <div className="flex gap-4">
-                        <Button 
-                            name="Editar Status" 
-                            color="blue" 
+                        <Button
+                            name="Editar Status"
+                            color="blue"
                             onClick={() => setEditModal(true)}
                         />
                     </div>
@@ -225,7 +229,7 @@ function DetalhePedidoPage() {
                             {pedido?.status}
                         </span>
                     </div>
-                    
+
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -234,29 +238,29 @@ function DetalhePedidoPage() {
                         <h2 className="text-xl font-semibold text-gray-800 pb-2">
                             Informações Financeiras
                         </h2>
-                        
+
                         <div className="space-y-4">
                             <div className="bg-green-50 p-4 rounded-lg">
                                 <h3 className="font-semibold text-gray-600 mb-1">Valor Total</h3>
                                 <p className="text-3xl font-bold text-green-600">
-                                    R$ {pedido?.valor_total?.toLocaleString('pt-BR', { 
-                                        minimumFractionDigits: 2, 
-                                        maximumFractionDigits: 2 
+                                    R$ {pedido?.valor_total?.toLocaleString('pt-BR', {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2
                                     })}
                                 </p>
                             </div>
-                            
+
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="bg-blue-50 p-4 rounded-lg">
                                     <h3 className="font-semibold text-gray-600 mb-1">Frete</h3>
                                     <p className="text-xl font-bold text-blue-600">
-                                        R$ {pedido?.frete?.toLocaleString('pt-BR', { 
-                                            minimumFractionDigits: 2, 
-                                            maximumFractionDigits: 2 
+                                        R$ {pedido?.frete?.toLocaleString('pt-BR', {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2
                                         })}
                                     </p>
                                 </div>
-                                
+
                                 <div className="bg-purple-50 p-4 rounded-lg">
                                     <h3 className="font-semibold text-gray-600 mb-1">Método de Pagamento</h3>
                                     <p className="text-lg font-medium text-purple-600">
@@ -271,7 +275,7 @@ function DetalhePedidoPage() {
                         <h2 className="text-xl font-semibold text-gray-800 pb-2">
                             Informações do Cliente
                         </h2>
-                        
+
                         <div className="space-y-4">
                             <div className="bg-gray-50 p-4 rounded-lg">
                                 <h3 className="font-semibold text-gray-600 mb-2">Email do Cliente</h3>
@@ -286,30 +290,30 @@ function DetalhePedidoPage() {
                     <h2 className="text-xl font-semibold text-gray-800 mb-6  pb-2">
                         Endereço de Entrega
                     </h2>
-                    
+
                     <div className="bg-gray-50 p-6 rounded-lg">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             <div>
                                 <h3 className="font-semibold text-gray-600 mb-1">CEP</h3>
                                 <p className="text-lg text-gray-800">{pedido?.cep}</p>
                             </div>
-                            
+
                             <div>
                                 <h3 className="font-semibold text-gray-600 mb-1">Cidade</h3>
                                 <p className="text-lg text-gray-800">{pedido?.cidade}</p>
                             </div>
-                            
+
                             <div>
                                 <h3 className="font-semibold text-gray-600 mb-1">Estado</h3>
                                 <p className="text-lg text-gray-800">{pedido?.estado}</p>
                             </div>
-                            
+
                             <div>
                                 <h3 className="font-semibold text-gray-600 mb-1">Bairro</h3>
                                 <p className="text-lg text-gray-800">{pedido?.bairro}</p>
                             </div>
                         </div>
-                        
+
                         <div className="mt-4">
                             <h3 className="font-semibold text-gray-600 mb-1">Número</h3>
                             <p className="text-lg text-gray-800">{pedido?.numero}</p>
