@@ -6,6 +6,7 @@ import CardPaymentForm from '../components/CheckoutPage/CardPaymentForm';
 import { validateCPF } from '../utils/validators';
 import { useCart } from '../components/CartContext';
 import { loadMercadoPago } from '@mercadopago/sdk-js';
+import apiClient from '../api';
 
 // --- Interfaces ---
 interface CartItem {
@@ -97,11 +98,10 @@ const CheckoutPage = () => {
   useEffect(() => {
     const fetchPublicKey = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/public-key/');
-        const data = await response.json();
-        if (data.public_key) {
+        const response = await apiClient.get('/public-key/');
+        if (response.data.public_key) {
           await loadMercadoPago();
-          const mpInstance = new (window as any).MercadoPago(data.public_key);
+          const mpInstance = new (window as any).MercadoPago(response.data.public_key);
           setMp(mpInstance);
         }
       } catch (error) { console.error('Error fetching public key:', error); }
@@ -131,20 +131,15 @@ const CheckoutPage = () => {
         }))
       };
 
-      const response = await fetch('http://127.0.0.1:8000/api/pagamento/processar/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(paymentData),
-      });
-      const result = await response.json();
+      const response = await apiClient.post('/pagamento/processar/', paymentData);
 
-      if (response.ok) {
+      if (response.status === 200) {
         setCompletedOrder({ items: cartItems, total: totalAmount });
         setShowSuccessPopup(true);
         clearCart();
         resetForm();
       } else {
-        setModalErrorData({ type: 'error', message: 'Erro no Pagamento', details: result.message || 'Ocorreu um erro.' });
+        setModalErrorData({ type: 'error', message: 'Erro no Pagamento', details: response.data?.message || 'Ocorreu um erro.' });
         setShowErrorModal(true);
       }
     } catch (error) {
