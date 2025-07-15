@@ -110,230 +110,128 @@ class ImageUploadView(APIView):
             print("--------------------------------------------------")
             return Response({'detail': f'Ocorreu um erro inesperado no servidor: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-@api_view(['POST']) # Aceita apenas requisições POST
-@permission_classes([AllowAny]) # Ajuste as permissões conforme sua necessidade (ex: IsAuthenticated)
-@csrf_exempt # Use apenas se necessário, o Django REST Framework tem sua própria forma de lidar com CSRF
-def process_payment(request):
-    if request.method == 'POST':
-        try:
-            # Receber os dados do frontend
-            data = json.loads(request.body)
-            print("Dados recebidos no backend:", data) # Para depuração
-            
-            token = data.get('token')
-            payment_method_id = data.get('payment_method_id')
-            installments = data.get('installments')
-            transaction_amount = data.get('transaction_amount')
-            description = data.get('description')
-
-            payer_data = data.get('payer', {})
-            payer_email = payer_data.get('email')
-            payer_first_name = payer_data.get('first_name')
-            payer_last_name = payer_data.get('last_name')
-
-            identification_data = payer_data.get('identification', {})
-            identification_type = identification_data.get('type')
-            identification_number = identification_data.get('number')
-
-            shipping_address_data = data.get('shipping_address', {})
-            shipping_city = shipping_address_data.get('city')
-            shipping_federal_unit = shipping_address_data.get('federal_unit')
-            shipping_neighborhood = shipping_address_data.get('neighborhood')
-            shipping_street_name = shipping_address_data.get('street_name')
-            shipping_street_number = shipping_address_data.get('street_number')
-            shipping_zip_code = shipping_address_data.get('zip_code')
-
-            print("DEBUG: Antes da validação 'all()'.")
-            print(f"DEBUG_VALORES: token='{token}', payment_method_id='{payment_method_id}', installments={installments}, transaction_amount={transaction_amount}, payer_email='{payer_email}'")
-            print(f"DEBUG_TIPOS: token_type={type(token)}, payment_method_id_type={type(payment_method_id)}, installments_type={type(installments)}, transaction_amount_type={type(transaction_amount)}, payer_email_type={type(payer_email)}")
-
-            # Exemplo de validação básica (adicione mais validações)
-            if not all([token, payment_method_id, installments, transaction_amount, payer_email]):
-                print("Validação falhou: Dados incompletos.")
-                print(f"Token: {token}, PaymentMethodId: {payment_method_id}, Installments: {installments}, TransactionAmount: {transaction_amount}, PayerEmail: {payer_email}")
-                return Response({"message": "Dados incompletos para processar o pagamento"}, status=status.HTTP_400_BAD_REQUEST)
-
-            try:
-                with transaction.atomic():
-                    # 1. Criar o Pedido no seu banco de dados
-                    teste_carrinho = Carrinho.objects.create(
-                        subtotal=float(transaction_amount)
-                    )
-
-                    novo_pedido = Pedido.objects.create(
-                        nome_usuario=f"{payer_first_name} {payer_last_name}".strip(),
-                        email_usuario=payer_email,
-                        codigo_carrinho=teste_carrinho,
-                        cep=shipping_zip_code,
-                        bairro=shipping_street_name,
-                        complemento=shipping_street_number,
-                        estado=shipping_federal_unit,
-                        cidade=shipping_city,
-                        numero=shipping_street_number,
-                        quadra=shipping_street_name,
-                        metodo_pagamento=payment_method_id,
-                        status='pendente', # Status inicial,
-                        frete=0.00,
-                        valor_total=float(transaction_amount)
-                        # ... outros campos relevantes do modelo Pedido (ex: itens do carrinho, data, etc.)
-                    )
-                    # O ID do Pedido é gerado automaticamente após o create
-                    order_id = str(novo_pedido.id) # Use o ID do Pedido como external_reference
-
-                    # Adicionar a chave de idempotência
-                    request_options = mercadopago.config.RequestOptions()
-                    # Use um valor único, por exemplo, o ID do Pedido ou um UUID gerado.
-                    # Se você já tem um order_id, ele pode servir como base.
-                    # Se você quer idempotência por *tentativa* de pagamento, gere um UUID aqui.
-    
-                    idempotency_key = str(uuid.uuid4()) # Gera um UUID único para cada tentativa
-
-                    request_options.custom_headers = {
-                        'x-idempotency-key': idempotency_key
-                    }
-
-                    # 2. Preparar os dados para o Mercado Pago
-                    sdk = mercadopago.SDK(settings.MERCADOPAGO_ACCESS_TOKEN)
-
-                    payment_data = {
-                        "token": token,
-                        "transaction_amount": float(transaction_amount),
-                        "payment_method_id": payment_method_id,
-                        "installments": int(installments),
-                        "description": description,
-                        "external_reference": order_id,
-                        "payer": {
-                            "email": payer_email,
-                            "first_name": payer_first_name,
-                            "last_name": payer_last_name,
-                            "identification": {
-                                "type": identification_type,
-                                "number": identification_number,
-                            }
-                        },
-                        "additional_info": { # Informações adicionais para o Mercado Pago
-                            "items": [
-                                # Aqui você deve popular com os itens do carrinho que vieram do frontend
-                                # Exemplo: {"id": "1", "title": "Bolsa Couro", "description": "Bolsa de couro genuíno", "quantity": 1, "unit_price": 3552.00}
-                            ],
-                            "payer": {
-                                "first_name": payer_first_name,
-                                "last_name": payer_last_name,
-                                "phone": { "area_code": "", "number": "" },
-                                "address": {
-                                    "zip_code": shipping_zip_code,
-                                    "street_name": shipping_street_name,
-                                    "street_number": shipping_street_number,
-                                    "neighborhood": shipping_neighborhood,
-                                    "city": shipping_city,
-                                    "federal_unit": shipping_federal_unit
-                                }
-                            },
-                            "shipments": {
-                                "receiver_address": {
-                                    "zip_code": shipping_zip_code,
-                                    "street_name": shipping_street_name,
-                                    "street_number": shipping_street_number,
-                                    "city": shipping_city,
-                                    "federal_unit": shipping_federal_unit
-                                }
-                            }
-                        }
-                    }
-
-                    # 3. Chamar o SDK do Mercado Pago para criar o pagamento
-                    payment_response = sdk.payment().create(payment_data, request_options)
-
-                    # Verificar se a resposta tem a estrutura esperada
-                    if "response" not in payment_response:
-                        raise ValueError(f"Resposta inesperada do Mercado Pago: {payment_response}")
-
-                    mp_status = payment_response["response"].get("status")
-                    mp_status_detail = payment_response["response"].get("status_detail")
-                    mp_payment_id = payment_response["response"].get("id") # ID do pagamento no MP
-
-                    # 4. Atualize o status do seu Pedido com base na resposta do Mercado Pago
-                    if mp_status == 'approved':
-                        novo_pedido.status = 'aprovado'
-                        logger.info(f"Pagamento aprovado para Pedido {order_id} (MP ID: {mp_payment_id}).")
-                        # TODO: Lógica para enviar confirmação de pedido, etc.
-                    elif mp_status == 'pending':
-                        novo_pedido.status = 'pendente_mp' # Para diferenciar de "pendente" inicial
-                        logger.warning(f"Pagamento pendente para Pedido {order_id} (MP ID: {mp_payment_id}). Detalhes: {mp_status_detail}")
-                    else: # rejected, cancelled, etc.
-                        novo_pedido.status = 'rejeitado'
-                        # logger.error(f"Pagamento rejeitado para Pedido {order_id} (MP ID: {mp_payment_id}). Status: {mp_status}, Detalhes: {mp_status_detail}")
-                        # TODO: Lógica para lidar com pagamentos rejeitados
-                    
-                    novo_pedido.mercadopago_payment_id = mp_payment_id # Salvar o ID do pagamento do MP
-                    novo_pedido.external_reference = order_id
-                    novo_pedido.save() # Salva a atualização de status
-
-                    # 5. Retorne a resposta ao frontend
-                    if mp_status == 'approved':
-                        return Response({"message": "Pagamento processado com sucesso!", "payment_id": mp_payment_id, "order_id": order_id}, status=status.HTTP_200_OK)
-                    else:
-                        return Response({"message": f"Pagamento não aprovado: {mp_status_detail}", "payment_status": mp_status, "payment_id": mp_payment_id, "order_id": order_id}, status=status.HTTP_400_BAD_REQUEST)
-
-            except DatabaseError as db_error:
-                # Tratar erros do banco de dados (ex: falha ao criar Pedido)
-                logger.error(f"Erro no banco de dados ao processar pagamento: {db_error}", exc_info=True)
-                return Response({"message": "Erro no servidor ao salvar pedido.", "details": str(db_error)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            except Exception as e:
-                # Capturar outros erros da lógica de pagamento
-                import logging
-                logger = logging.getLogger(__name__)
-                logger.error(f"Erro inesperado ao processar pagamento: {e}", exc_info=True)
-                return Response({"message": "Erro interno ao processar o pagamento", "details": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        except json.JSONDecodeError:
-            return Response({"message": "Invalid JSON in request body"}, status=status.HTTP_400_BAD_REQUEST)
-        
-    return Response({"message": "Método não permitido"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
+@api_view(['POST'])
+@permission_classes([AllowAny])
 @csrf_exempt
-def mercadopago_webhook(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            topic = data.get('topic')
-            resource_id = data.get('id')
+def process_payment(request):
+    if request.method != 'POST':
+        return Response({"message": "Método não permitido"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-            logger.info(f"Webhook recebido: Topic={topic}, ID={resource_id}")
+    try:
+        data = json.loads(request.body)
+        logger.info("Dados recebidos no backend: %s", data)
 
-            if topic == 'payment':
-                mercadopago_service = MercadoPagoService()
-                payment_details = mercadopago_service.get_payment_details(resource_id)
+        # --- 1. Extração de Dados ---
+        token = data.get('token')
+        payment_method_id = data.get('payment_method_id')
+        installments = data.get('installments')
+        transaction_amount = data.get('transaction_amount')
+        description = data.get('description')
 
-                if payment_details:
-                    with transaction.atomic():
-                        external_reference = payment_details.get('external_reference')
-                        mp_status = payment_details.get('status')
-                        mp_id = payment_details.get('id')
+        payer_data = data.get('payer', {})
+        # CORREÇÃO: Lendo todos os dados do pagador a partir do objeto 'payer_data'
+        payer_email = payer_data.get('email')
+        payer_first_name = payer_data.get('first_name')
+        payer_last_name = payer_data.get('last_name')
+        
+        identification_data = payer_data.get('identification', {})
+        identification_type = identification_data.get('type')
+        identification_number = identification_data.get('number')
 
-                        try:
-                            Pedido = Pedido.objects.get(external_reference=external_reference)
-                            Pedido.mp_payment_id = mp_id
-                            Pedido.status = mp_status # Atualiza o status do seu pedido
-                            Pedido.save()
-                            logger.info(f"Pedido {Pedido.id} atualizado para status: {mp_status}")
-                            return JsonResponse({"status": "success"}, status=200)
-                        except Pedido.DoesNotExist:
-                            logger.warning(f"Webhook para external_reference {external_reference} não encontrado.")
-                            return JsonResponse({"status": "error", "message": "Pedido not found"}, status=404)
-                else:
-                    return JsonResponse({"status": "error", "message": "Failed to fetch payment details"}, status=400)
+        shipping_address_data = data.get('shipping_address', {})
+        shipping_zip_code = shipping_address_data.get('zip_code')
+        shipping_street_name = shipping_address_data.get('street_name')
+        shipping_street_number = shipping_address_data.get('street_number')
+        shipping_city = shipping_address_data.get('city')
+        shipping_federal_unit = shipping_address_data.get('federal_unit')
+
+        # --- Validação ---
+        if not all([token, payment_method_id, installments, transaction_amount, payer_email]):
+            logger.warning("Validação falhou: Dados incompletos. %s", data)
+            return Response({"message": "Dados incompletos para processar o pagamento"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # --- 2. Criação do Pedido e Preparação para o MP ---
+        with transaction.atomic():
+            # CORREÇÃO: Lógica para criar o pedido no banco de dados
+            temp_cart = Carrinho.objects.create(subtotal=float(transaction_amount))
+            novo_pedido = Pedido.objects.create(
+                nome_usuario=f"{payer_first_name} {payer_last_name}".strip(),
+                email_usuario=payer_email,
+                codigo_carrinho=temp_cart,
+                cep=shipping_zip_code,
+                bairro=shipping_address_data.get('neighborhood', ''),
+                cidade=shipping_city,
+                estado=shipping_federal_unit,
+                numero=shipping_street_number,
+                quadra=shipping_street_name,
+                metodo_pagamento=payment_method_id,
+                status='pendente',
+                valor_total=float(transaction_amount)
+            )
+            order_id = str(novo_pedido.id)
+            
+            # CORREÇÃO: Criando o objeto request_options
+            request_options = mercadopago.config.RequestOptions()
+            request_options.custom_headers = { 'x-idempotency-key': str(uuid.uuid4()) }
+
+            # --- 3. Envio para o Mercado Pago ---
+            sdk = mercadopago.SDK(settings.MERCADOPAGO_ACCESS_TOKEN)
+            payment_data = {
+                "token": token,
+                "transaction_amount": float(transaction_amount),
+                "payment_method_id": payment_method_id,
+                "installments": int(installments),
+                "description": description,
+                "external_reference": order_id,
+                "payer": {
+                    "email": payer_email,
+                    "first_name": payer_first_name,
+                    "last_name": payer_last_name,
+                    "identification": { "type": identification_type, "number": identification_number }
+                }
+            }
+
+            logger.info("Enviando para Mercado Pago...")
+            payment_response = sdk.payment().create(payment_data, request_options)
+            logger.info("Resposta completa do Mercado Pago: %s", payment_response)
+
+            if "response" not in payment_response or payment_response.get("status") >= 400:
+                error_details = payment_response.get("response", {})
+                logger.error("Erro da API do Mercado Pago para o pedido %s: %s", order_id, error_details)
+                novo_pedido.status = 'falha_mp'
+                novo_pedido.save()
+                return Response({"message": "Gateway de pagamento retornou um erro.", "details": error_details}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # --- 4. Atualização do Status do Pedido ---
+            response_body = payment_response["response"]
+            mp_status = response_body.get("status")
+            mp_status_detail = response_body.get("status_detail")
+            mp_payment_id = response_body.get("id")
+
+            logger.info("MP Status: %s, Detail: %s, Payment ID: %s", mp_status, mp_status_detail, mp_payment_id)
+
+            if mp_status == 'approved':
+                novo_pedido.status = 'aprovado'
+            elif mp_status == 'pending' or mp_status == 'in_process':
+                novo_pedido.status = 'pendente_mp'
             else:
-                logger.info(f"Webhook de tópico ignorado: {topic}")
-                return JsonResponse({"status": "ignored"}, status=200)
+                novo_pedido.status = 'rejeitado'
 
-        except json.JSONDecodeError:
-            logger.error("Webhook: Invalid JSON payload.")
-            return JsonResponse({"status": "error", "message": "Invalid JSON"}, status=400)
-        except Exception as e:
-            logger.error(f"Erro inesperado no webhook: {e}", exc_info=True)
-            return JsonResponse({"status": "error", "message": str(e)}, status=500)
-    return JsonResponse({"status": "method not allowed"}, status=405)
+            novo_pedido.mercadopago_payment_id = mp_payment_id
+            novo_pedido.save()
+
+            # --- 5. Resposta ao Frontend ---
+            if novo_pedido.status == 'aprovado':
+                return Response({"message": "Pagamento aprovado!", "payment_id": mp_payment_id, "order_id": order_id}, status=status.HTTP_201_CREATED)
+            else:
+                return Response({"message": "Pagamento não aprovado", "mp_status_detail": mp_status_detail}, status=status.HTTP_400_BAD_REQUEST)
+
+    except json.JSONDecodeError:
+        logger.error("Erro de decodificação JSON no corpo da requisição.")
+        return Response({"message": "Corpo da requisição JSON inválido"}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logger.error("Erro inesperado em process_payment: %s", e, exc_info=True)
+        return Response({"message": "Erro interno no servidor", "details": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @csrf_exempt
@@ -343,3 +241,63 @@ def get_public_key(request):
     Retorna a chave pública do Mercado Pago para o frontend.
     """
     return JsonResponse({"public_key": settings.MERCADOPAGO_PUBLIC_KEY})
+
+@csrf_exempt
+def mercadopago_webhook(request):
+    """
+    Recebe notificações de webhook do Mercado Pago para atualizar o status dos pagamentos.
+    """
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            topic = data.get('topic')
+            
+            logger.info(f"Webhook recebido: {data}")
+
+            if topic == 'payment':
+                payment_id = data.get('id') or data.get('data', {}).get('id')
+                if not payment_id:
+                    logger.warning("Webhook de pagamento sem ID recebido.")
+                    return JsonResponse({"status": "error", "message": "Payment ID não encontrado no webhook"}, status=400)
+
+                # Usando o SDK para buscar os detalhes do pagamento de forma segura
+                sdk = mercadopago.SDK(settings.MERCADOPAGO_ACCESS_TOKEN)
+                payment_details = sdk.payment().get(payment_id)
+
+                if payment_details and payment_details.get("status") == 200:
+                    payment_info = payment_details["response"]
+                    external_reference = payment_info.get('external_reference')
+                    mp_status = payment_info.get('status')
+                    mp_id = payment_info.get('id')
+
+                    if not external_reference:
+                        logger.warning(f"Pagamento {mp_id} recebido via webhook sem external_reference.")
+                        return JsonResponse({"status": "ignored", "message": "Sem external_reference"}, status=200)
+
+                    # Atualiza o pedido no banco de dados
+                    try:
+                        with transaction.atomic():
+                            pedido = Pedido.objects.get(id=external_reference)
+                            pedido.mercadopago_payment_id = mp_id
+                            pedido.status = mp_status # Ex: 'approved', 'rejected'
+                            pedido.save()
+                            logger.info(f"Pedido {pedido.id} atualizado via webhook para status: {mp_status}")
+                    
+                    except Pedido.DoesNotExist:
+                        logger.warning(f"Webhook para pedido com ID (external_reference) {external_reference} não encontrado.")
+                        return JsonResponse({"status": "error", "message": "Pedido não encontrado"}, status=404)
+                
+                else:
+                    logger.error(f"Não foi possível buscar detalhes do pagamento {payment_id} via webhook.")
+                    return JsonResponse({"status": "error", "message": "Falha ao buscar detalhes do pagamento"}, status=400)
+
+            return JsonResponse({"status": "received"}, status=200)
+
+        except json.JSONDecodeError:
+            logger.error("Webhook: Payload JSON inválido.")
+            return JsonResponse({"status": "error", "message": "JSON inválido"}, status=400)
+        except Exception as e:
+            logger.error(f"Erro inesperado no webhook: {e}", exc_info=True)
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+    return JsonResponse({"status": "method not allowed"}, status=405)

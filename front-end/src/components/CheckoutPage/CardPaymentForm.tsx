@@ -165,11 +165,30 @@ const CardPaymentForm = forwardRef<any, CardPaymentFormProps>(({
           bin,
           payment_method_id: paymentMethod.id,
         });
-        const installmentOptions = installmentsResponse[0]?.payer_costs || [];
+
+        let installmentOptions = installmentsResponse[0]?.payer_costs || [];
+
+        console.log("installmentsResponse:", installmentsResponse);
+        console.log("payer_costs:", installmentOptions);
+
+        // 🔷 fallback: se não vier nada do MP (valor baixo), coloca pelo menos 1x sem juros
+        if (installmentOptions.length === 0) {
+          installmentOptions = [{
+            installments: 1,
+            recommended_message: '1x sem juros',
+          }];
+        }
+
         const installmentOptionsKeys = { label: 'recommended_message', value: 'installments' };
         createSelectOptions(installmentsElement, installmentOptions, installmentOptionsKeys);
       } catch (error) {
         console.error('error getting installments: ', error);
+
+        // fallback em caso de erro também
+        createSelectOptions(installmentsElement, [{
+          installments: 1,
+          recommended_message: '1x sem juros',
+        }], { label: 'recommended_message', value: 'installments' });
       }
     };
 
