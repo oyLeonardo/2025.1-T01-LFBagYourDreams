@@ -1,55 +1,31 @@
-# 💻 Setup do Projeto Python/Django
+<h1 align="center">
+    <img src="https://mdsreq-fga-unb.github.io/2025.1-T01-LFBagYourDreams/assets/logo-lf.png" height="250"alt="Logo">
+</h1>
 
-Este documento explica como configurar o ambiente, instalar dependências e executar o projeto utilizando qualquer uma das seguintes tecnologias de sua escolha:
+## Sobre
 
-- **[UV](https://github.com/astral-sh/uv)** (com `pyproject.toml` e `uv.lock`)
-- **Pip** (com `requirements.txt`)
-- **[Docker](https://www.docker.com/)**
+Este repositório faz parte da disciplina de **Requisitos** do curso de Engenharia de Software da **Universidade de Brasília (UnB)**.
 
-## 🛠️ Próximos passos
+Aqui estão reunidos os códigos, entregas e documentações desenvolvidas ao longo do semestre, com foco na elicitação, análise, especificação e validação de requisitos de software.
 
-### 1.1 Clone o projeto
 
-```bash
-git clone https://github.com/mdsreq-fga-unb/2025.1-T01-LFBagYourDreams.git
+## Documentação
+É possível encontrar nossa documentação na branch
+<a href="https://github.com/mdsreq-fga-unb/2025.1-T01-LFBagYourDreams/tree/docs">
+  docs
+</a> ou acessando o link no about do projeto.
 
-cd "2025.1-T01-LFBagYourDreams"
-```
+## Colaboradores
 
-### 1.2 Instalando dependências e executando o projeto
-
-- 1.2.1 Se estiver utilizando o **[UV](https://github.com/astral-sh/uv)**
-
-📁 Caminho: `./2025.1-T01-LFBagYourDreams/`
-
-```bash
-uv init
-uv sync
-
-cd "backend/"
-```
-
-```bash
-uv run manage.py runserver
-```
-
-- 1.2.2 Se estiver utilizando o `pip`
-
-📁 Caminho: `./2025.1-T01-LFBagYourDreams/`
-
-```bash
-pip install -r requirements.txt
-cd "backend/"
-```
-
-```bash
-python3 manage.py runserver
-```
-
-- 1.2.3 Se estiver utilizando o **[Docker](https://www.docker.com/)**
-
-📁 Caminho: `./2025.1-T01-LFBagYourDreams/`
-
-```bash
-docker-compose up -d --build
-```
+<table>
+    <tr>
+    <td align="center"><a href="https://github.com/oyLeonardo"><img src="https://avatars.githubusercontent.com/u/143723442?v=4" width="200px;" alt=""/><br/><sub><b>Leonardo Barcellos</b></sub></a><br/>
+    <td align="center"><a href="https://github.com/Edumorais08"><img src="https://avatars.githubusercontent.com/u/139409504?v=4" width="200px;" alt=""/><br /><sub><b>Eduardo Morais</b></sub></a><br />
+    <td align="center"><a href="https://github.com/isabellachoukaira"><img src="https://avatars.githubusercontent.com/u/185298426?v=4" width="200px;" alt=""/><br /><sub><b>Isabella Choukaira</b></sub></a><br />
+    <td align="center"><a href="https://github.com/RR2M4A"><img src="https://avatars.githubusercontent.com/u/135292465?v=4" width="200px;" alt=""/><br /><sub><b>José Victor</b></sub></a><br />
+    <td align="center"><a href="https://github.com/Pedro-Henrique3"><img src="https://avatars.githubusercontent.com/u/141349792?v=4" width="200px;" alt=""/><br /><sub><b>Pedro Henrique</b></sub></a><br />
+    </tr>
+    <tr>
+    <td align="center"><a href="https://github.com/Yasm1nNasc1mento"><img src="https://avatars.githubusercontent.com/u/164230168?v=4" width="200px;" alt=""/><br /><sub><b>Yasmin Nascimento</b></sub></a><br />
+    </tr>
+</table>
