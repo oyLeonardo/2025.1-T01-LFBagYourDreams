@@ -5,7 +5,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import {type Produto} from '../types/produto'
 import ProdutoCard from '../components/ProdutoCard';
-
+import apiClient from '../api';
 function HomePage() {
   const navigate = useNavigate();
   const [produtosDestaque, setProdutosDestaque] = useState<Produto[]>([]);
@@ -15,9 +15,8 @@ function HomePage() {
   useEffect(() => {
     const fetchProdutosDestaque = async () => {
       try {
-        const response = await fetch('http://localhost:8000/api/products/');
-        const data = await response.json();
-        setProdutosDestaque(selecionarDestaques(data));
+        const response = await apiClient.get('/products/');
+        setProdutosDestaque(selecionarDestaques(response.data));
       } catch (error) {
         console.error('Erro ao buscar produtos:', error);
       } finally {

@@ -4,16 +4,14 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import {type Produto} from '../types/produto'
 import ProdutoCard from '../components/ProdutoCard';
-
+import apiClient from '../api';
 function CatalogoPage() {
   const { categoria } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const [products, setproducts] = useState<Produto[]>([]);
+  const [produtos, setProdutos] = useState<Produto[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
-
-  const API_BASE_URL = 'http://localhost:8000/api/products/';
 
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
@@ -31,33 +29,25 @@ function CatalogoPage() {
       params.append('search', searchTerm);
     }
 
-    const apiUrl = `${API_BASE_URL}?${params.toString()}`;
-    console.log("Fetching data from:", apiUrl);
+    const endpoint = `/products/?${params.toString()}`;
+    console.log("Fetching data from endpoint:", endpoint);
 
-    fetchData(apiUrl);
+    fetchData(endpoint);
   }, [categoria, location.search, location.pathname]);
 
-  function fetchData(apiUrl: string) {
+  async function fetchData(endpoint: string) {
     setCarregando(true);
     setErro(null);
     
-    fetch(apiUrl)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`Erro HTTP: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then((data) => {
-        setproducts(data);
-      })
-      .catch((error) => {
-        console.error('Erro ao buscar products:', error);
-        setErro('Não foi possível carregar os products. Tente novamente mais tarde.');
-      })
-      .finally(() => {
-        setCarregando(false);
-      });
+    try {
+      const response = await apiClient.get<Produto[]>(endpoint);
+      setProdutos(response.data);
+    } catch (error) {
+      console.error('Erro ao buscar produtos:', error);
+      setErro('Não foi possível carregar os produtos. Tente novamente mais tarde.');
+    } finally {
+      setCarregando(false);
+    }
   }
   
     const verDetalhes = (produtoId: number)=> {
@@ -74,7 +64,7 @@ function CatalogoPage() {
       
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <h1 className="text-3xl font-bold mb-8 text-gray-800 capitalize">
-          {categoria ? categoria : 'Todos os products'}
+          {categoria ? categoria : 'Todos os produtos'}
         </h1>
 
         {searchTerm && (
@@ -96,7 +86,7 @@ function CatalogoPage() {
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-600"></div>
           </div>
-        ) : products.length === 0 ? (
+        ) : produtos.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-lg shadow">
             <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -111,7 +101,7 @@ function CatalogoPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 px-8">
 
-            {products.map(produto => (
+            {produtos.map((produto: Produto) => (
               <ProdutoCard
                 key={produto.id}
                 produto={produto}

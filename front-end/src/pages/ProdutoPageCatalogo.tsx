@@ -4,7 +4,7 @@ import Navbar from '../components/Navbar';
 import { useCart } from '../components/CartContext';
 import {type Produto} from '../types/produto';
 import { getCorClass } from '../utils/getCorClass';
-
+import apiClient from '../api';
 
 function ProdutoPage() {
   const { id } = useParams();
@@ -16,21 +16,18 @@ function ProdutoPage() {
   const [quantidade, setQuantidade] = useState(1);
   const [mostrarConfirmacao, setMostrarConfirmacao] = useState(false);
 
-  const API_LISTA_PRODUTOS = 'http://localhost:8000/api/products/';
-
   useEffect(() => {
     const fetchProduto = async () => {
       setCarregando(true);
       setErro(null);
       
       try {
-        const response = await fetch(API_LISTA_PRODUTOS);
-        
-        if (!response.ok) {
+        const response = await apiClient.get('/products/');
+        if (!response.data) {
           throw new Error('Erro ao buscar lista de produtos');
         }
-        
-        const todosProdutos = await response.json();
+
+        const todosProdutos = await response.data;
         const produtoEncontrado = todosProdutos.find((p: Produto) => p.id === Number(id));
 
         if (!produtoEncontrado) {

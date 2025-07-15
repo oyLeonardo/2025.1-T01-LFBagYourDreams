@@ -2,7 +2,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import Button from '../components/Button';
 import apiClient from '../api';
-import Alertas from '../components/Alertas';
 interface ImagemProduto {
   id: number;
   url: string;

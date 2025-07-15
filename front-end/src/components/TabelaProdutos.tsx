@@ -6,7 +6,7 @@ import {
 } from '@tanstack/react-table';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
+import apiClient from '../api';
 interface ImagemProduto {
   id: number;
   url: string;
@@ -49,41 +49,31 @@ const columns = [
 ];
 
 function TabelaProdutos() {
-  const [products, setproducts] = useState<Produto[]>([]);
+  const [produtos, setProdutos] = useState<Produto[]>([]);
   const [pageIndex, setPageIndex] = useState(0);
   const pageSize = 10;
   const navigate = useNavigate();
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   
-
-  const API_URL = 'http://localhost:8000/api/products/';
   
   useEffect(() => {
-    fetchData(API_URL);
+    fetchData();
   }, []);
-  
-  function fetchData(baseUrl: string) {
+
+  async function fetchData() {
     setCarregando(true);
     setErro(null);
-    
-    fetch(baseUrl)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`Erro HTTP: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then((data) => {
-        setproducts(data);
-      })
-      .catch((error) => {
-        console.error('Erro ao buscar products:', error);
-        setErro('Não foi possível carregar os products. Tente novamente mais tarde.');
-      })
-      .finally(() => {
-        setCarregando(false);
-      });
+
+    try {
+      const response = await apiClient.get<Produto[]>('/products/');
+      setProdutos(response.data);
+    } catch (error) {
+      console.error('Erro ao buscar produtos:', error);
+      setErro('Não foi possível carregar os produtos. Tente novamente mais tarde.');
+    } finally {
+      setCarregando(false);
+    }
   }
 
   const handleRowClick = (produto: Produto) => {
@@ -93,8 +83,8 @@ function TabelaProdutos() {
   const paginatedData = useMemo(() => {
     const start = pageIndex * pageSize;
     const end = start + pageSize;
-    return products.slice(start, end);
-  }, [pageIndex, pageSize, products]);
+    return produtos.slice(start, end);
+  }, [pageIndex, pageSize, produtos]);
 
   const table = useReactTable({
     data: paginatedData,
@@ -102,7 +92,7 @@ function TabelaProdutos() {
     getCoreRowModel: getCoreRowModel(),
   });
 
-  const totalPages = Math.ceil(products.length / pageSize);
+  const totalPages = Math.ceil(produtos.length / pageSize);
 
   if (carregando) {
     return (
@@ -120,7 +110,7 @@ function TabelaProdutos() {
         <div className="flex flex-col justify-center items-center h-64">
           <div className="text-lg text-red-600 mb-4">{erro}</div>
           <button 
-            onClick={() => fetchData(API_URL)}
+            onClick={() => fetchData()}
             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           >
             Tentar novamente
