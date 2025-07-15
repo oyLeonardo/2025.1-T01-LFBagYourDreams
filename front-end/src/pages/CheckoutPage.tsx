@@ -131,7 +131,7 @@ const CheckoutPage = () => {
         }))
       };
 
-      const response = await apiClient.post('/pagamento/processar/', paymentData);
+      const response = await apiClient.post('api/pagamento/processar/', paymentData);
 
       if (response.status === 200) {
         setCompletedOrder({ items: cartItems, total: totalAmount });
