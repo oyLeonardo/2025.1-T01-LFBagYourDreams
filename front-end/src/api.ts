@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://lfbagyourdreams.fly.dev/api',
+  baseURL: 'https://lfbagyourdreams.fly.dev/',
 });
 
 apiClient.interceptors.request.use(
