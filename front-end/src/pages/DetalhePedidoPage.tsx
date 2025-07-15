@@ -68,7 +68,7 @@ function DetalhePedidoPage() {
         e.preventDefault();
         setAlerta(null);
         try {
-            await apiClient.put(`/order/${pedidoId}/`, { status: formData.status });
+            await apiClient.put(`/api/order/${pedidoId}/`, { status: formData.status });
             setAlerta({ mensagem: 'Pedido atualizado com sucesso!', tipo: 'success' });
             fetchPedido();
         } catch (error) {

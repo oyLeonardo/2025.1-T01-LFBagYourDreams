@@ -98,7 +98,7 @@ const CheckoutPage = () => {
   useEffect(() => {
     const fetchPublicKey = async () => {
       try {
-        const response = await apiClient.get('/public-key/');
+        const response = await apiClient.get('/api/public-key/');
         if (response.data.public_key) {
           await loadMercadoPago();
           const mpInstance = new (window as any).MercadoPago(response.data.public_key);
