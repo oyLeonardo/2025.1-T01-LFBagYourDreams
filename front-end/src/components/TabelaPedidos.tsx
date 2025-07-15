@@ -55,7 +55,7 @@ function TabelaPedidos() {
     setCarregando(true);
     setErro(null);
     try {
-      const response = await apiClient.get('/api/orders/'); 
+      const response = await apiClient.get('api/orders/'); 
       setPedidos(response.data.results || response.data); 
     } catch (error) {
       console.error('Erro ao buscar pedidos:', error);

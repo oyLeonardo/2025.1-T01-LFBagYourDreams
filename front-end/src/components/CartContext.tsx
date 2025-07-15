@@ -50,7 +50,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         console.log("Nenhum ID de carrinho encontrado, criando um novo no backend...");
         try {
           // Usa a rota /api/carrinhos/criar/ que criámos no backend
-          const response = await apiClient.post('/api/carrinhos/criar/');
+          const response = await apiClient.post('api/carrinhos/criar/');
           const newCartId = response.data.id;
 
           if (newCartId) {

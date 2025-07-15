@@ -42,7 +42,7 @@ function DetalheProdutoPage() {
             setCarregando(true);
             try {
                 // 2. CORREÇÃO: Usando apiClient para buscar os dados com autenticação
-                const response = await apiClient.get<Produto>(`/product/${produtoId}/`);
+                const response = await apiClient.get<Produto>(`api/product/${produtoId}/`);
                 setProduto(response.data);
             } catch (error) {
                 console.error('Erro ao buscar produto:', error);
@@ -79,7 +79,7 @@ function DetalheProdutoPage() {
         setDeleteModal(false);
         try {
             // 3. CORREÇÃO: Usando apiClient para deletar com autenticação
-            await apiClient.delete(`/api/product/${produtoId}/`);
+            await apiClient.delete(`api/product/${produtoId}/`);
             navigate('/admin/produtos'); 
         } catch (error) {
             console.error('Erro ao deletar produto:', error);

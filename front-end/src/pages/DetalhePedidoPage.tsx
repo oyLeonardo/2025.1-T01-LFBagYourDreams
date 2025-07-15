@@ -52,7 +52,7 @@ function DetalhePedidoPage() {
     const fetchPedido = async () => {
         setCarregando(true);
         try {
-            const response = await apiClient.get<Pedido>(`/order/${pedidoId}/`);
+            const response = await apiClient.get<Pedido>(`api/order/${pedidoId}/`);
             // Adicionamos a formatação do CEP aqui
             const pedidoFormatado = { ...response.data, cep: formatarCEP(response.data.cep) };
             setPedido(pedidoFormatado);
@@ -68,7 +68,7 @@ function DetalhePedidoPage() {
         e.preventDefault();
         setAlerta(null);
         try {
-            await apiClient.put(`/api/order/${pedidoId}/`, { status: formData.status });
+            await apiClient.put(`api/order/${pedidoId}/`, { status: formData.status });
             setAlerta({ mensagem: 'Pedido atualizado com sucesso!', tipo: 'success' });
             fetchPedido();
         } catch (error) {

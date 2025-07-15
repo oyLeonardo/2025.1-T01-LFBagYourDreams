@@ -66,7 +66,7 @@ function TabelaProdutos() {
     setErro(null);
 
     try {
-      const response = await apiClient.get<Produto[]>('/api/products/');
+      const response = await apiClient.get<Produto[]>('api/products/');
       setProdutos(response.data);
     } catch (error) {
       console.error('Erro ao buscar produtos:', error);
