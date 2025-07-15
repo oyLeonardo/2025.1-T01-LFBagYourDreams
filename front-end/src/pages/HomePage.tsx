@@ -15,7 +15,7 @@ function HomePage() {
   useEffect(() => {
     const fetchProdutosDestaque = async () => {
       try {
-        const response = await apiClient.get('/products/');
+        const response = await apiClient.get('/api/products/');
         setProdutosDestaque(selecionarDestaques(response.data));
       } catch (error) {
         console.error('Erro ao buscar produtos:', error);

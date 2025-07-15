@@ -70,7 +70,7 @@ function AdicionarProdutoPage(){
             const carregarProduto = async () => {
                 setCarregando(true);
                 try {
-                    const response = await apiClient.get(`/product/${produtoId}/`);
+                    const response = await apiClient.get(`/api/product/${produtoId}/`);
                     
                     const produto = response.data;
                     setFormData(prevState => ({

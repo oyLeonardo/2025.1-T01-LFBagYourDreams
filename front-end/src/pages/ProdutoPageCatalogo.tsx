@@ -22,7 +22,7 @@ function ProdutoPage() {
       setErro(null);
       
       try {
-        const response = await apiClient.get('/products/');
+        const response = await apiClient.get('/api/products/');
         if (!response.data) {
           throw new Error('Erro ao buscar lista de produtos');
         }

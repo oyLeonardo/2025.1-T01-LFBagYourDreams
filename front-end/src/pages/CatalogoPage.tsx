@@ -29,7 +29,7 @@ function CatalogoPage() {
       params.append('search', searchTerm);
     }
 
-    const endpoint = `/products/?${params.toString()}`;
+    const endpoint = `/api/products/?${params.toString()}`;
     console.log("Fetching data from endpoint:", endpoint);
 
     fetchData(endpoint);
