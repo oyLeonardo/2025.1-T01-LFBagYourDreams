@@ -2,9 +2,30 @@
 
 from rest_framework import serializers
 from . import models
+from app.models import ProdutoImagem, Pedido
 from .models import Carrinho, Cor, Personalizacao, Produto, ProdutoCarrinho, Pedido
 from .utils.supabase_utils import upload_file_object_to_supabase
 import re
+
+class ProdutoImagemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProdutoImagem
+        fields = ['url']
+
+class ProdutoSerializer(serializers.ModelSerializer):
+    imagens = ProdutoImagemSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Produto
+        fields = ['titulo', 'imagens']
+
+# class PedidoDetailSerializer(serializers.ModelSerializer):
+#     itens = ItemPedidoSerializer(many=True)
+
+#     class Meta:
+#         model = Pedido
+#         fields = ['id', 'email_usuario', 'status', 'valor_total', 'cep', 'bairro', 'estado',
+#                   'cidade', 'numero', 'metodo_pagamento', 'frete', 'itens']
 
 class CarrinhoSerializer(serializers.ModelSerializer):
     """Serializer para o modelo Carrinho."""
@@ -38,15 +59,14 @@ class ProdutoCarrinhoSerializer(serializers.ModelSerializer):
 
 class ProdutoParaPedidoSerializer(serializers.ModelSerializer):
     """
-    Um serializer simples que define quais campos do Produto
-    queremos mostrar na página de detalhes do pedido.
+    Serializer simples para mostrar os detalhes do produto dentro de um pedido.
     """
-    # Usamos um SerializerMethodField para pegar a URL da primeira imagem
-    imagem_url = serializers.SerializerMethodField()
+    # Usa o serializer de imagens que você já tem para criar o array
+    imagens = ProdutoImagemSerializer(many=True, read_only=True)
 
     class Meta:
         model = Produto
-        fields = ['id', 'titulo', 'imagem_url']
+        fields = ['id', 'titulo', 'imagens']
 
     def get_imagem_url(self, obj):
         # Pega a primeira imagem associada a este produto
@@ -57,23 +77,22 @@ class ProdutoParaPedidoSerializer(serializers.ModelSerializer):
 
 class ItensDoPedidoSerializer(serializers.ModelSerializer):
     """
-    Este serializer representa um item dentro do carrinho,
-    combinando o produto (usando o serializer acima) e a quantidade.
+    Representa um item do pedido, combinando o produto e a quantidade.
     """
+    # Usa o serializer de produto corrigido
     produto = ProdutoParaPedidoSerializer(source='id_produto', read_only=True)
 
     class Meta:
         model = ProdutoCarrinho
-        # Adicione 'quantidade' se você tiver esse campo no modelo ProdutoCarrinho
-        # Por enquanto, vamos assumir que não, mas você pode adicionar depois.
-        # fields = ['produto', 'quantidade']
-        fields = ['produto']
+        # Adiciona a quantidade e o id do produto ao resultado
+        fields = ['produto', 'quantidade']
 
 class OrderSerializer(serializers.ModelSerializer):
-    """ Serializer para o Pedido, agora com a lista de produtos de forma segura. """
-
-    # MUDANÇA: Trocamos a declaração direta por um SerializerMethodField.
-    # Isso nos permite definir uma função customizada para obter os dados.
+    """
+    Serializer para o Pedido, agora com um método explícito e seguro 
+    para buscar os itens do carrinho.
+    """
+    # MUDANÇA: Substituímos a linha com 'source' por um SerializerMethodField.
     produtos_do_carrinho = serializers.SerializerMethodField()
 
     class Meta:
@@ -81,23 +100,34 @@ class OrderSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'email_usuario', 'status', 'valor_total', 'cep', 'bairro',
             'estado', 'cidade', 'numero', 'metodo_pagamento', 'frete',
-            'produtos_do_carrinho'
+            'produtos_do_carrinho'  # O nome do campo continua o mesmo para o frontend
         ]
 
     def get_produtos_do_carrinho(self, obj):
         """
-        Este método é chamado para cada pedido para preencher o campo 'produtos_do_carrinho'.
-        'obj' aqui é a instância do Pedido.
+        Este método customizado busca os itens do carrinho associado ao pedido.
+        'obj' é a instância do Pedido que está a ser serializada.
         """
-        # Verificamos se o pedido realmente tem um carrinho associado
-        if obj.codigo_carrinho:
-            # Se tiver, buscamos os itens do carrinho...
-            itens_carrinho = obj.codigo_carrinho.produtocarrinho_set.all()
-            # ...e usamos o serializer que já criamos para formatá-los.
-            return ItensDoPedidoSerializer(itens_carrinho, many=True).data
-        
-        # Se o pedido não tiver um carrinho, retornamos uma lista vazia em vez de quebrar.
-        return []
+        try:
+            # 1. Pega o carrinho que está ligado a este pedido
+            carrinho = obj.codigo_carrinho
+            if not carrinho:
+                return [] # Retorna lista vazia se não houver carrinho ligado
+
+            # 2. Pega todos os itens (ProdutoCarrinho) que pertencem a esse carrinho.
+            # A forma padrão de fazer isso é usando 'produtocarrinho_set.all()'.
+            # Se isto não funcionar, o problema está no 'related_name' do seu modelo.
+            itens_do_carrinho = carrinho.produtocarrinho_set.all()
+
+            # 3. Usa o ItensDoPedidoSerializer que já criamos para formatar os dados
+            serializer = ItensDoPedidoSerializer(itens_do_carrinho, many=True)
+            return serializer.data
+            
+        except Exception as e:
+            # Em caso de qualquer erro, loga o erro e retorna uma lista vazia
+            # para não quebrar a API.
+            print(f"DEBUG: Erro ao serializar itens para o Pedido #{obj.id}: {e}")
+            return []
 
     def validate_cep(self, value):
         """O cep tem exatamente 8 dígitos e 1 hífen"""

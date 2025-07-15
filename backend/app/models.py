@@ -97,9 +97,11 @@ class ProdutoCarrinho(models.Model):    # pylint: disable=too-few-public-methods
     pk = models.CompositePrimaryKey('id_produto', 'id_carrinho')
     id_produto = models.ForeignKey(Produto, models.DO_NOTHING, db_column='id_produto')
     id_carrinho = models.ForeignKey(Carrinho, models.DO_NOTHING, db_column='id_carrinho')
+    
+    # ADICIONE ESTE CAMPO
+    quantidade = models.IntegerField()
 
-    class Meta: # pylint: disable=too-few-public-methods
-        """Define que este modelo é apenas leitura (sem migrations)"""
+    class Meta:
         db_table = 'produto_carrinho'
         managed = False
 

@@ -23,7 +23,9 @@ interface ModalProps {
 
 // --- Componente Principal ---
 const CheckoutPage = () => {
-  const { cartItems, clearCart } = useCart();
+  const { cartItems, clearCart, cartId } = useCart();
+
+  console.log("1. ID do carrinho obtido do contexto:", cartId); 
 
   // Estados do Formulário
   const [paymentMethod, setPaymentMethod] = useState('credit-card');
@@ -120,6 +122,8 @@ const CheckoutPage = () => {
         payment_method_id: (CardPaymentFormRef.current?.getPaymentMethodId() || ''),
         payer: { email: email, identification: { type: identificationType, number: identificationNumber }, first_name: nome.split(' ')[0], last_name: nome.split(' ').slice(1).join(' ') || '' },
         shipping_address: { zip_code: cep.replace(/\D/g, ''), street_name: endereco, street_number: numero, neighborhood: '', city: cidade, federal_unit: estado },
+
+        cart_id: cartId,
 
         cart_items: cartItems.map(item => ({
             product_id: item.id,
