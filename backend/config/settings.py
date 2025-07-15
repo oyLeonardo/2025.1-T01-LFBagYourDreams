@@ -61,7 +61,7 @@ INSTALLED_APPS = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173", # Porta padrão do Vite dev server
     "http://127.0.0.1:5173",
-    # Adicione aqui o URL do seu frontend em produção (ex: "https://your-frontend-domain.com")
+    "https://2025-1-t01-lf-bag-your-dreams.vercel.app"
 ]
 
 # Email settings
